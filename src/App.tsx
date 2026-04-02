@@ -860,6 +860,39 @@ export default function App() {
             </div>
           </div>
         </section>
+        {/* SEO & FAQ Section */}
+        <section className="mb-32 px-6">
+          <div className="max-w-4xl mx-auto">
+            <h3 className="text-3xl font-black text-trust-navy mb-12 text-center">Vrindavan Travel Guide & FAQ</h3>
+            <div className="grid gap-8">
+              <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                <h4 className="font-bold text-trust-navy mb-3">What are the Vrindavan temple timings today?</h4>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  Temple timings in Vrindavan vary by season. Generally, Banke Bihari mandir opening time is 7:45 AM in summer and 8:45 AM in winter. ISKCON Vrindavan aarti schedule starts with Mangala Aarti at 4:30 AM. For real-time updates on Radha Raman temple darshan time and Nidhivan closing time, use our live dashboard above.
+                </p>
+              </div>
+              <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                <h4 className="font-bold text-trust-navy mb-3">How to get Premanand Ji Maharaj Ekantik Vartalap token?</h4>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  To get an Ekantik Vartalap token, you need to visit the Premanand Maharaj ashram location on Sunrakh road early in the morning. Token distribution time usually starts at 2:00 AM. For the latest Shri Hit Radha Kripa Parivar updates and Maharaj ji vartalap registration process, follow our special events section.
+                </p>
+              </div>
+              <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                <h4 className="font-bold text-trust-navy mb-3">Where can I find scooty on rent in Vrindavan?</h4>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  You can find the best bike rental near Vrindavan railway station or near the ISKCON temple. Prices for scooty on rent in Vrindavan usually range from ₹300 to ₹500 per day. E-rickshaws are also a great alternative for short distances between Banke Bihari and other temples.
+                </p>
+              </div>
+              <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                <h4 className="font-bold text-trust-navy mb-3">Are there rooms near Banke Bihari temple?</h4>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  Yes, there are many dharamshalas in Vrindavan with affordable prices starting from ₹500. For a more comfortable stay, look for hotels near Raman Reti or Sunrakh road. We also provide contacts for local guides to help you find the best accommodation and online Prasad delivery services.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </main>
 
       <footer className="bg-white border-t border-slate-100 py-20 px-6">

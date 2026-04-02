@@ -22,9 +22,73 @@ import {
 import { format, isWithinInterval, parse, set } from 'date-fns';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { 
+  collection, 
+  getDocs, 
+  doc, 
+  updateDoc, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  setDoc,
+  getDocFromServer
+} from 'firebase/firestore';
+import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User } from 'firebase/auth';
+import { db, auth, logAnalyticsEvent } from './firebase';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
 }
 
 interface Timing {
@@ -114,23 +178,34 @@ export default function App() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [season, setSeason] = useState<'summer' | 'winter'>(() => {
     const month = new Date().getMonth();
-    // Summer: March (2) to October (9)
     return (month >= 2 && month <= 9) ? 'summer' : 'winter';
   });
   const [expandedTemple, setExpandedTemple] = useState<number | null>(null);
   const [showAlerts, setShowAlerts] = useState(true);
   const [isAdminMode, setIsAdminMode] = useState(false);
-  const [adminPassword, setAdminPassword] = useState('');
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [editingTemple, setEditingTemple] = useState<Temple | null>(null);
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationProgress, setMigrationProgress] = useState(0);
 
-  const handleAdminLogin = () => {
-    if (adminPassword === 'vrindavan360') {
-      setIsAuthorized(true);
+  const handleAdminLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
       setIsAdminMode(false);
-      setAdminPassword('');
-    } else {
-      alert('Incorrect Password');
+    } catch (error) {
+      console.error('Login failed:', error);
+      alert('Login failed. Please try again.');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setIsAdminMode(false);
+    } catch (error) {
+      console.error('Logout failed:', error);
     }
   };
 
@@ -138,52 +213,131 @@ export default function App() {
     e.preventDefault();
     if (!editingTemple) return;
 
+    const path = `temples/${editingTemple.id}`;
     try {
-      const res = await fetch(`/api/temples/${editingTemple.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingTemple)
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setTemples(temples.map(t => t.id === updated.id ? updated : t));
-        setEditingTemple(null);
-        alert('Temple Updated Successfully');
-      }
+      const templeRef = doc(db, 'temples', editingTemple.id.toString());
+      await updateDoc(templeRef, { ...editingTemple, last_verified: `Updated on ${format(new Date(), 'd MMMM, yyyy')}` });
+      logAnalyticsEvent('temple_update', { temple_id: editingTemple.id, temple_name: editingTemple.name });
+      setEditingTemple(null);
+      alert('Temple Updated Successfully');
     } catch (error) {
-      console.error('Update failed:', error);
+      handleFirestoreError(error, OperationType.UPDATE, path);
+    }
+  };
+
+  const migrateInitialData = async () => {
+    if (!user || user.email !== 'shivamojha1422000@gmail.com') return;
+    
+    setIsMigrating(true);
+    setMigrationProgress(0);
+    try {
+      const templesRes = await fetch('/api/temples');
+      const eventsRes = await fetch('/api/events');
+      const initialTemples = await templesRes.json();
+      const initialEvents = await eventsRes.json();
+
+      const totalItems = initialTemples.length + initialEvents.length;
+      let completedItems = 0;
+
+      for (const t of initialTemples) {
+        await setDoc(doc(db, 'temples', t.id.toString()), t);
+        completedItems++;
+        setMigrationProgress(Math.round((completedItems / totalItems) * 100));
+      }
+      for (const e of initialEvents) {
+        await setDoc(doc(db, 'events', e.id.toString()), e);
+        completedItems++;
+        setMigrationProgress(Math.round((completedItems / totalItems) * 100));
+      }
+      
+      logAnalyticsEvent('data_migration_complete');
+      
+      // Visual "Click" / Success Feedback
+      const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
+      audio.play().catch(() => {}); // Ignore if browser blocks audio
+      
+      alert('Data Migrated Successfully!');
+    } catch (error) {
+      console.error('Migration failed:', error);
+      alert('Migration failed. Check console for details.');
+    } finally {
+      setIsMigrating(false);
     }
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [templesRes, eventsRes] = await Promise.all([
-          fetch('/api/temples'),
-          fetch('/api/events')
-        ]);
-        const templesData = await templesRes.json();
-        const eventsData = await eventsRes.json();
-        setTemples(templesData);
-        setEvents(eventsData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    logAnalyticsEvent('page_view', { page_title: 'Home' });
+  }, []);
 
-    fetchData();
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setIsAuthReady(true);
+      if (currentUser) {
+        logAnalyticsEvent('login', { method: 'Google', user_email: currentUser.email });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    async function testConnection() {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+      } catch (error) {
+        if(error instanceof Error && error.message.includes('the client is offline')) {
+          console.error("Please check your Firebase configuration. ");
+        }
+      }
+    }
+    testConnection();
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthReady) return;
+
+    const templesQuery = query(collection(db, 'temples'), orderBy('visitor_count', 'desc'));
+    const unsubscribeTemples = onSnapshot(templesQuery, (snapshot) => {
+      const templeList = snapshot.docs.map(doc => doc.data() as Temple);
+      if (templeList.length > 0) {
+        setTemples(templeList);
+        setLoading(false);
+      } else {
+        fetch('/api/temples').then(res => res.json()).then(data => {
+          setTemples(data);
+          setLoading(false);
+        });
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'temples');
+    });
+
+    const eventsQuery = query(collection(db, 'events'), orderBy('id', 'asc'));
+    const unsubscribeEvents = onSnapshot(eventsQuery, (snapshot) => {
+      const eventList = snapshot.docs.map(doc => doc.data() as SpecialEvent);
+      if (eventList.length > 0) {
+        setEvents(eventList);
+      } else {
+        fetch('/api/events').then(res => res.json()).then(data => setEvents(data));
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'events');
+    });
+
     const timer = setInterval(() => {
       const now = new Date();
       setCurrentTime(now);
-      // Auto-update season
       const month = now.getMonth();
       const newSeason = (month >= 2 && month <= 9) ? 'summer' : 'winter';
       if (newSeason !== season) setSeason(newSeason);
     }, 1000);
-    return () => clearInterval(timer);
-  }, [season]);
+
+    return () => {
+      unsubscribeTemples();
+      unsubscribeEvents();
+      clearInterval(timer);
+    };
+  }, [isAuthReady, season]);
 
   const getTempleStatus = (temple: Temple) => {
     const schedule = temple.timings[season];
@@ -405,7 +559,12 @@ export default function App() {
                 placeholder="Search temples..." 
                 className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-trust-mint/20 focus:border-trust-mint transition-all outline-none bg-white shadow-sm"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (e.target.value.length > 3) {
+                    logAnalyticsEvent('search', { query: e.target.value });
+                  }
+                }}
               />
             </div>
           </div>
@@ -413,7 +572,10 @@ export default function App() {
           {/* Filter Bar */}
           <div className="flex flex-wrap items-center gap-4 mb-8 p-2 bg-slate-50/50 rounded-2xl border border-slate-100">
             <button 
-              onClick={() => setFilterOpen(!filterOpen)}
+              onClick={() => {
+                setFilterOpen(!filterOpen);
+                logAnalyticsEvent('filter_toggle', { filter: 'open_now', value: !filterOpen });
+              }}
               className={cn(
                 "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
                 filterOpen 
@@ -426,7 +588,10 @@ export default function App() {
             </button>
             
             <button 
-              onClick={() => setFilterEvent(!filterEvent)}
+              onClick={() => {
+                setFilterEvent(!filterEvent);
+                logAnalyticsEvent('filter_toggle', { filter: 'special_events', value: !filterEvent });
+              }}
               className={cn(
                 "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
                 filterEvent 
@@ -444,7 +609,11 @@ export default function App() {
               <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sort By:</span>
               <select 
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'name' | 'opening' | 'mostly_visited')}
+                onChange={(e) => {
+                  const val = e.target.value as 'name' | 'opening' | 'mostly_visited';
+                  setSortBy(val);
+                  logAnalyticsEvent('sort_change', { sort_by: val });
+                }}
                 className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-bold text-trust-navy outline-none focus:border-trust-gold transition-all cursor-pointer"
               >
                 <option value="mostly_visited">Mostly Visited</option>
@@ -544,23 +713,33 @@ export default function App() {
                       </div>
 
                       <div className="flex flex-col gap-3 w-full md:w-auto">
-                        {isAuthorized && (
+                        {user?.email === 'shivamojha1422000@gmail.com' && (
                           <button 
-                            onClick={() => setEditingTemple(temple)}
+                            onClick={() => {
+                              setEditingTemple(temple);
+                              logAnalyticsEvent('admin_edit_click', { temple_name: temple.name });
+                            }}
                             className="px-6 py-3 rounded-xl bg-trust-gold/10 text-trust-gold text-sm font-bold hover:bg-trust-gold/20 transition-all flex items-center justify-center gap-2"
                           >
                             Edit Data
                           </button>
                         )}
                         <button 
-                          onClick={() => setExpandedTemple(isExpanded ? null : temple.id)}
+                          onClick={() => {
+                            const newState = !isExpanded;
+                            setExpandedTemple(newState ? temple.id : null);
+                            logAnalyticsEvent('temple_expand', { temple_name: temple.name, expanded: newState });
+                          }}
                           className="px-6 py-3 rounded-xl bg-slate-100 text-sm font-bold text-trust-navy hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
                         >
                           {isExpanded ? 'Hide Details' : 'View Details'}
                           <ChevronRight className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-90")} />
                         </button>
                         <button 
-                          onClick={() => window.open(temple.maps_url, '_blank')}
+                          onClick={() => {
+                            logAnalyticsEvent('navigation_click', { temple_name: temple.name });
+                            window.open(temple.maps_url, '_blank');
+                          }}
                           className="px-6 py-3 rounded-xl bg-trust-mint text-white text-sm font-bold hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
                         >
                           <Navigation className="w-4 h-4" /> 
@@ -752,19 +931,12 @@ export default function App() {
               exit={{ scale: 0.9, opacity: 0 }}
               className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl"
             >
-              {!isAuthorized ? (
+              {!user ? (
                 <div className="space-y-6">
                   <div className="text-center">
                     <h3 className="text-2xl font-black text-trust-navy mb-2">Admin Login</h3>
-                    <p className="text-sm text-slate-500">Enter password to manage temple data.</p>
+                    <p className="text-sm text-slate-500">Login with Google to manage temple data.</p>
                   </div>
-                  <input 
-                    type="password" 
-                    placeholder="Enter Password"
-                    value={adminPassword}
-                    onChange={(e) => setAdminPassword(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-trust-gold outline-none text-sm"
-                  />
                   <div className="flex gap-3">
                     <button 
                       onClick={() => setIsAdminMode(false)}
@@ -774,9 +946,9 @@ export default function App() {
                     </button>
                     <button 
                       onClick={handleAdminLogin}
-                      className="flex-1 py-3 rounded-xl bg-trust-navy text-white text-sm font-bold"
+                      className="flex-1 py-3 rounded-xl bg-trust-navy text-white text-sm font-bold flex items-center justify-center gap-2"
                     >
-                      Login
+                      Login with Google
                     </button>
                   </div>
                 </div>
@@ -784,11 +956,45 @@ export default function App() {
                 <div className="space-y-6">
                   <div className="text-center">
                     <h3 className="text-2xl font-black text-trust-navy mb-2">Admin Dashboard</h3>
-                    <p className="text-sm text-slate-500">Select a temple from the list to edit its details.</p>
+                    <p className="text-sm text-slate-500">Welcome, {user.displayName}</p>
                   </div>
                   <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
-                    <p className="text-xs text-emerald-700 font-bold text-center">Authorized: You can now edit temple data directly from the cards.</p>
+                    <p className="text-xs text-emerald-700 font-bold text-center">
+                      {user.email === 'shivamojha1422000@gmail.com' 
+                        ? "Authorized: You can now edit temple data directly from the cards." 
+                        : "Access Denied: Only the business owner can edit data."}
+                    </p>
                   </div>
+                  {user.email === 'shivamojha1422000@gmail.com' && temples.length > 0 && (
+                    <div className="space-y-3">
+                      <button 
+                        onClick={migrateInitialData}
+                        disabled={isMigrating}
+                        className={cn(
+                          "w-full py-3 rounded-xl text-sm font-bold transition-all",
+                          isMigrating ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-trust-gold text-trust-navy hover:shadow-lg"
+                        )}
+                      >
+                        {isMigrating ? 'Syncing Sacred Data...' : 'Sync Local Data to Cloud'}
+                      </button>
+                      
+                      {isMigrating && (
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[10px] font-bold text-trust-navy uppercase tracking-widest">
+                            <span>Progress</span>
+                            <span>{migrationProgress}%</span>
+                          </div>
+                          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${migrationProgress}%` }}
+                              className="h-full bg-trust-gold"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="flex gap-3">
                     <button 
                       onClick={() => setIsAdminMode(false)}
@@ -797,7 +1003,7 @@ export default function App() {
                       Close Dashboard
                     </button>
                     <button 
-                      onClick={() => { setIsAuthorized(false); setIsAdminMode(false); }}
+                      onClick={handleLogout}
                       className="flex-1 py-3 rounded-xl bg-rose-50 text-rose-600 text-sm font-bold border border-rose-100"
                     >
                       Logout

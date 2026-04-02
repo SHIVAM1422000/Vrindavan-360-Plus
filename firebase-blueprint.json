@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "Temple": {
+      "title": "Temple",
+      "description": "A sacred temple in Vrindavan with timings and details.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "name": { "type": "string" },
+        "specialty": { "type": "string" },
+        "pro_tip": { "type": "string" },
+        "event_id": { "type": "number" },
+        "timings": {
+          "type": "object",
+          "properties": {
+            "summer": {
+              "type": "object",
+              "properties": {
+                "morning": { "type": "object", "properties": { "open": { "type": "string" }, "close": { "type": "string" } } },
+                "evening": { "type": "object", "properties": { "open": { "type": "string" }, "close": { "type": "string" } } }
+              }
+            },
+            "winter": {
+              "type": "object",
+              "properties": {
+                "morning": { "type": "object", "properties": { "open": { "type": "string" }, "close": { "type": "string" } } },
+                "evening": { "type": "object", "properties": { "open": { "type": "string" }, "close": { "type": "string" } } }
+              }
+            }
+          }
+        },
+        "aarti": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "time": { "type": "string" }
+            }
+          }
+        },
+        "last_verified": { "type": "string" },
+        "visitor_count": { "type": "number" },
+        "maps_url": { "type": "string" }
+      },
+      "required": ["id", "name", "timings", "maps_url"]
+    },
+    "SpecialEvent": {
+      "title": "SpecialEvent",
+      "description": "A special religious event or festival.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "name": { "type": "string" },
+        "date": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["id", "name", "date"]
+    }
+  },
+  "firestore": {
+    "/temples/{templeId}": {
+      "schema": "Temple",
+      "description": "Collection of temples."
+    },
+    "/events/{eventId}": {
+      "schema": "SpecialEvent",
+      "description": "Collection of special events."
+    }
+  }
+}

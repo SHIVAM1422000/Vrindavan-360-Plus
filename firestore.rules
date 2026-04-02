@@ -1,0 +1,68 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: temples
+// Document ID: templeId (string)
+// Fields:
+//   - id: number (required)
+//   - name: string (required)
+//   - specialty: string (optional)
+//   - pro_tip: string (optional)
+//   - event_id: number (optional)
+//   - timings: map (required)
+//   - aarti: list (optional)
+//   - last_verified: string (optional)
+//   - visitor_count: number (optional)
+//   - maps_url: string (required)
+//
+// Collection: events
+// Document ID: eventId (string)
+// Fields:
+//   - id: number (required)
+//   - name: string (required)
+//   - date: string (required)
+//   - description: string (optional)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "shivamojha1422000@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidTemple(data) {
+      return data.id is number &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.maps_url is string && data.maps_url.matches("^https://.*");
+    }
+
+    match /temples/{templeId} {
+      // Publicly readable for visitors
+      allow read: if true;
+      
+      // Only admin can create or update
+      allow create: if isAdmin() && isValidTemple(request.resource.data);
+      allow update: if isAdmin() && isValidTemple(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /events/{eventId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}

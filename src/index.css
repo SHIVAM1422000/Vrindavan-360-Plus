@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", sans-serif;
+  
+  --color-trust-navy: #00416A; /* Deep Ocean Blue */
+  --color-trust-gold: #D4AF37; /* Divine Gold */
+  --color-trust-bg: #FDFDFD; /* Soft Off-White */
+  --color-trust-mint: #10B981; /* Teal/Green for Navigation */
+}
+
+@layer base {
+  body {
+    @apply bg-trust-bg text-trust-navy font-sans antialiased;
+  }
+}
+
+.btn-primary {
+  @apply bg-trust-navy text-white font-bold py-3 px-8 rounded-xl hover:bg-trust-gold hover:text-trust-navy transition-all shadow-lg shadow-trust-navy/20 active:scale-95;
+}
+
+.card-trust {
+  @apply bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-trust-navy/5 transition-all duration-300;
+}
+
+.section-title {
+  @apply text-3xl font-extrabold text-trust-navy tracking-tight mb-4;
+}
+
+.status-dot {
+  @apply w-2.5 h-2.5 rounded-full inline-block;
+}
+
+.status-dot-green {
+  @apply bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] animate-pulse;
+}
+
+.status-dot-red {
+  @apply bg-rose-400;
+}

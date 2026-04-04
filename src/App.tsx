@@ -31,6 +31,8 @@ import {
   query, 
   orderBy, 
   setDoc,
+  addDoc,
+  serverTimestamp,
   getDocFromServer
 } from 'firebase/firestore';
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User } from 'firebase/auth';
@@ -123,6 +125,15 @@ interface SpecialEvent {
   location: string;
   business_angle: string;
   months: number[];
+  time?: string; // Optional time in HH:mm format
+}
+
+interface Enquiry {
+  id: string;
+  name: string;
+  phone: string;
+  enquiry: string;
+  timestamp: any;
 }
 
 const testimonials = [
@@ -181,11 +192,20 @@ export default function App() {
     return (month >= 2 && month <= 9) ? 'summer' : 'winter';
   });
   const [expandedTemple, setExpandedTemple] = useState<number | null>(null);
-  const [showAlerts, setShowAlerts] = useState(true);
+  const [showAlerts, setShowAlerts] = useState(false);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [editingTemple, setEditingTemple] = useState<Temple | null>(null);
+  const [editingEvent, setEditingEvent] = useState<SpecialEvent | null>(null);
+  const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [whatsappSubmitted, setWhatsappSubmitted] = useState(false);
+  const [adminViewEnquiries, setAdminViewEnquiries] = useState(false);
+  const [showWhatsappBadge, setShowWhatsappBadge] = useState(false);
+  const [whatsappForm, setWhatsappForm] = useState({ name: '', phone: '', enquiry: '' });
+  const [hasClickedWhatsapp, setHasClickedWhatsapp] = useState(false);
+  const [language, setLanguage] = useState<'en' | 'hi'>('en');
   const [isMigrating, setIsMigrating] = useState(false);
   const [migrationProgress, setMigrationProgress] = useState(0);
 
@@ -222,6 +242,42 @@ export default function App() {
       alert('Temple Updated Successfully');
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, path);
+    }
+  };
+
+  const handleUpdateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEvent) return;
+
+    const path = `events/${editingEvent.id}`;
+    try {
+      const eventRef = doc(db, 'events', editingEvent.id.toString());
+      await updateDoc(eventRef, { ...editingEvent });
+      logAnalyticsEvent('event_update', { event_id: editingEvent.id, event_name: editingEvent.event });
+      setEditingEvent(null);
+      alert('Event Updated Successfully');
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, path);
+    }
+  };
+
+  const handleWhatsappSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    logAnalyticsEvent('whatsapp_form_submit', { ...whatsappForm });
+    
+    try {
+      await addDoc(collection(db, 'enquiries'), {
+        ...whatsappForm,
+        timestamp: serverTimestamp()
+      });
+      setWhatsappSubmitted(true);
+      setTimeout(() => {
+        setShowWhatsAppModal(false);
+        setWhatsappSubmitted(false);
+        setWhatsappForm({ name: '', phone: '', enquiry: '' });
+      }, 2000);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'enquiries');
     }
   };
 
@@ -278,6 +334,30 @@ export default function App() {
       }
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user?.email === 'shivamojha1422000@gmail.com') {
+      const q = query(collection(db, 'enquiries'), orderBy('timestamp', 'desc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const enquiryList = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Enquiry[];
+        setEnquiries(enquiryList);
+      }, (error) => {
+        handleFirestoreError(error, OperationType.GET, 'enquiries');
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const badgeTimer = setTimeout(() => {
+      setShowWhatsappBadge(true);
+    }, 5000); // 5 seconds delay
+
+    return () => clearTimeout(badgeTimer);
   }, []);
 
   useEffect(() => {
@@ -389,7 +469,24 @@ export default function App() {
       return statusA.openingTime.getTime() - statusB.openingTime.getTime();
     });
 
-  const activeAlerts = events.filter(e => e.months.includes(currentTime.getMonth()));
+  const activeAlerts = events.filter(e => {
+    const isCorrectMonth = e.months.includes(currentTime.getMonth());
+    if (!isCorrectMonth) return false;
+    
+    if (e.time) {
+      try {
+        const eventTime = parse(e.time, 'HH:mm', currentTime);
+        // Show alert 3 hours before and up to 1 hour after the event
+        const startWindow = set(eventTime, { hours: eventTime.getHours() - 3 });
+        const endWindow = set(eventTime, { hours: eventTime.getHours() + 1 });
+        return isWithinInterval(currentTime, { start: startWindow, end: endWindow });
+      } catch (err) {
+        console.error('Error parsing event time:', e.time, err);
+        return true; // Fallback to showing if parsing fails
+      }
+    }
+    return true; // If no time specified, show for the whole month
+  });
 
   // Special Maharaj Token Alert
   const currentHour = currentTime.getHours();
@@ -421,16 +518,42 @@ export default function App() {
             </div>
           </div>
           
-          <div className="hidden md:flex items-center gap-8">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-full border border-slate-100">
-              <div className={cn("w-2 h-2 rounded-full animate-pulse", season === 'summer' ? "bg-orange-400" : "bg-blue-400")} />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{season} Schedule Active</span>
+          <div className="flex items-center gap-4">
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                const newLang = language === 'en' ? 'hi' : 'en';
+                setLanguage(newLang);
+                logAnalyticsEvent('language_change', { language: newLang });
+              }}
+              className="px-4 py-2 bg-trust-navy text-white rounded-full text-[10px] font-black uppercase tracking-widest transition-all border border-trust-navy shadow-lg shadow-trust-navy/20"
+            >
+              {language === 'en' ? 'हिन्दी' : 'English'}
+            </motion.button>
+
+            <div className="hidden md:flex items-center gap-8">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-full border border-slate-100">
+                <div className={cn("w-2 h-2 rounded-full animate-pulse", season === 'summer' ? "bg-orange-400" : "bg-blue-400")} />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{season} Schedule Active</span>
+              </div>
+              <a href="#temples" className="text-xs font-bold uppercase tracking-widest text-trust-navy hover:text-trust-gold transition-colors">Temples</a>
+              <a href="#how-we-help" className="text-xs font-bold uppercase tracking-widest text-trust-navy hover:text-trust-gold transition-colors">Process</a>
+              <button 
+                onClick={() => setShowAlerts(!showAlerts)}
+                className="relative p-2 text-trust-navy hover:bg-slate-50 rounded-full transition-all"
+              >
+                <Bell className="w-5 h-5" />
+                {(activeAlerts.length > 0 || isTokenTime) && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-trust-gold rounded-full border-2 border-white"></span>
+                )}
+              </button>
             </div>
-            <a href="#temples" className="text-xs font-bold uppercase tracking-widest text-trust-navy hover:text-trust-gold transition-colors">Temples</a>
-            <a href="#how-we-help" className="text-xs font-bold uppercase tracking-widest text-trust-navy hover:text-trust-gold transition-colors">Process</a>
+
+            {/* Mobile Menu Button */}
             <button 
+              className="md:hidden p-2 text-trust-navy hover:bg-slate-50 rounded-full"
               onClick={() => setShowAlerts(!showAlerts)}
-              className="relative p-2 text-trust-navy hover:bg-slate-50 rounded-full transition-all"
             >
               <Bell className="w-5 h-5" />
               {(activeAlerts.length > 0 || isTokenTime) && (
@@ -441,14 +564,260 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Side Alerts - Small Message Popup */}
+      {/* Floating Notification Button (Right, above WhatsApp) */}
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => {
+          setShowAlerts(!showAlerts);
+          logAnalyticsEvent('live_updates_click');
+        }}
+        className={cn(
+          "fixed bottom-24 right-4 md:bottom-24 md:right-6 z-[60] w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center transition-all border-4 border-white",
+          showAlerts ? "bg-trust-gold text-trust-navy" : "bg-trust-navy text-white"
+        )}
+      >
+        <Bell className={cn("w-5 h-5 md:w-6 md:h-6", (activeAlerts.length > 0 || isTokenTime) && "animate-bounce")} />
+        <motion.div 
+          animate={{ opacity: [1, 0.5, 1] }}
+          transition={{ duration: 1, repeat: Infinity }}
+          className="absolute -top-2 -right-2 bg-rose-600 text-white text-[7px] md:text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-lg border border-white/20"
+        >
+          <span className="w-1 h-1 bg-white rounded-full animate-ping" />
+          LIVE
+        </motion.div>
+        {(activeAlerts.length > 0 || isTokenTime) && (
+          <span className="absolute -bottom-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-trust-gold rounded-full border-2 border-white text-[8px] md:text-[9px] font-black flex items-center justify-center text-trust-navy shadow-sm">
+            {activeAlerts.length + (isTokenTime ? 1 : 0)}
+          </span>
+        )}
+      </motion.button>
+
+      {/* Floating WhatsApp Button (Right) */}
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ 
+          scale: [1, 1.05, 1], 
+          opacity: 1,
+          boxShadow: [
+            "0 0 0px rgba(212, 175, 55, 0)", 
+            "0 0 30px rgba(212, 175, 55, 0.6)", 
+            "0 0 0px rgba(212, 175, 55, 0)"
+          ]
+        }}
+        transition={{ 
+          scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+          opacity: { duration: 0.3 },
+          boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+        }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => {
+          if (!hasClickedWhatsapp) {
+            logAnalyticsEvent('whatsapp_first_click');
+            setHasClickedWhatsapp(true);
+          }
+          if (user?.email === 'shivamojha1422000@gmail.com') {
+            setAdminViewEnquiries(true);
+          } else {
+            setAdminViewEnquiries(false);
+          }
+          setShowWhatsAppModal(true);
+          setShowWhatsappBadge(false);
+          logAnalyticsEvent('whatsapp_icon_click');
+        }}
+        className="fixed bottom-8 right-4 md:bottom-6 md:right-6 z-[60] w-12 h-12 md:w-14 md:h-14 bg-[#25D366] text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-[#20ba5a] transition-colors border-4 border-white"
+      >
+        <svg viewBox="0 0 24 24" className="w-6 h-6 md:w-8 md:h-8 fill-current">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        {showWhatsappBadge && (
+          <motion.div 
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white rounded-full border-2 border-white text-[10px] font-black flex items-center justify-center shadow-lg"
+          >
+            1
+          </motion.div>
+        )}
+      </motion.button>
+
+      {/* WhatsApp Form Modal */}
       <AnimatePresence>
-        {showAlerts && activeAlerts.length > 0 && (
+        {showWhatsAppModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowWhatsAppModal(false)}
+            className="fixed inset-0 z-[100] bg-trust-navy/60 backdrop-blur-sm flex items-center justify-center p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#E5DDD5] w-full max-w-md rounded-3xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              {/* WhatsApp Style Header */}
+              <div className="bg-[#075E54] p-4 flex items-center gap-3 text-white shrink-0">
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold">Ras Naagri Sharan</h3>
+                  <p className="text-[10px] text-white/70">Online (Radhe Radhe!)</p>
+                </div>
+                {user?.email === 'shivamojha1422000@gmail.com' && (
+                  <button 
+                    onClick={() => setAdminViewEnquiries(!adminViewEnquiries)}
+                    className="ml-auto px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-[10px] font-bold border border-white/20"
+                  >
+                    {adminViewEnquiries ? 'Show Form' : `Leads (${enquiries.length})`}
+                  </button>
+                )}
+                <button 
+                  onClick={() => setShowWhatsAppModal(false)}
+                  className={cn("p-2 hover:bg-white/10 rounded-full transition-colors", user?.email !== 'shivamojha1422000@gmail.com' && "ml-auto")}
+                >
+                  <CheckCircle2 className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Chat Area / Form */}
+              <div className="p-6 space-y-4 bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat overflow-y-auto custom-scrollbar min-h-[450px]">
+                {whatsappSubmitted ? (
+                  <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="flex flex-col items-center justify-center h-full pt-10 space-y-4"
+                  >
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", damping: 12 }}
+                      className="w-20 h-20 bg-[#25D366] rounded-full flex items-center justify-center shadow-xl shadow-[#25D366]/30"
+                    >
+                      <CheckCircle2 className="w-12 h-12 text-white" />
+                    </motion.div>
+                    <div className="text-center">
+                      <h3 className="text-xl font-black text-slate-800">Radhe Radhe!</h3>
+                      <p className="text-sm text-slate-600">Aapki enquiry humein mil gayi hai.</p>
+                      <p className="text-[10px] text-slate-400 mt-4 italic">Closing in 2 seconds...</p>
+                    </div>
+                  </motion.div>
+                ) : adminViewEnquiries && user?.email === 'shivamojha1422000@gmail.com' ? (
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center bg-white/80 py-1 rounded-full shadow-sm">Recent Enquiries</p>
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
+                      {enquiries.length === 0 ? (
+                        <p className="text-xs text-slate-400 italic text-center py-10 bg-white/50 rounded-xl">No enquiries yet.</p>
+                      ) : (
+                        enquiries.map(enquiry => (
+                          <div key={enquiry.id} className="bg-white p-4 rounded-xl rounded-tl-none shadow-sm relative border-l-4 border-[#25D366]">
+                            <div className="flex justify-between items-start mb-1">
+                              <p className="text-[10px] font-black text-trust-navy">{enquiry.name}</p>
+                              <p className="text-[8px] text-slate-400">
+                                {enquiry.timestamp?.toDate ? format(enquiry.timestamp.toDate(), 'MMM d, h:mm a') : 'Now'}
+                              </p>
+                            </div>
+                            <p className="text-[11px] font-bold text-[#25D366] mb-1">{enquiry.phone}</p>
+                            <p className="text-[11px] text-slate-600 italic leading-tight bg-slate-50 p-2 rounded-lg">"{enquiry.enquiry}"</p>
+                            <div className="pt-2">
+                              <a 
+                                href={`https://wa.me/${enquiry.phone.replace(/\D/g, '')}`} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="text-[9px] font-black text-[#25D366] uppercase tracking-widest hover:underline flex items-center gap-1"
+                              >
+                                Reply on WhatsApp <ArrowRight className="w-2 h-2" />
+                              </a>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Introduction Message */}
+                    <div className="bg-white p-4 rounded-xl rounded-tl-none shadow-sm relative mb-4">
+                      <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1">Shree Harivansh !!</p>
+                      <p className="text-xs text-slate-700 leading-relaxed">
+                        Main <span className="font-bold text-trust-navy">"Ras Naagri Sharan"</span> pehle Software Engineer tha, par ab sab tyag kar <span className="font-bold text-trust-navy">"Param Pujya Premanand Ji Maharaj"</span> ka sishya hoon aur pichle 2.5 saal se Shri Dham Vrindavan mein vaas kar rha hoon.
+                      </p>
+                      <p className="text-xs text-slate-700 leading-relaxed mt-2">
+                        Main apne Vrindavan-Vaas ki vyavastha aur aapki yatra ko sugam banane ke liye ye <span className="font-bold text-trust-navy">Sewa (Scooty Rental / Genuine Product Orders / Guide/ Help/ Live Darshan/ Prasad)</span> pradan karta hoon.
+                      </p>
+                      <p className="text-xs font-bold text-trust-navy italic mt-2">Seva ke liye sampark kare.</p>
+                      <span className="text-[8px] text-slate-400 absolute bottom-1 right-2">Just now</span>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm max-w-[85%] relative">
+                      <p className="text-xs text-red-600 font-medium">Radhe Radhe! 🙏 Kripya apni jaankari bharein taaki main aapki behtar sewa kar sakoon.</p>
+                      <span className="text-[8px] text-slate-400 absolute bottom-1 right-2">Just now</span>
+                    </div>
+
+                    <form onSubmit={handleWhatsappSubmit} className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-black uppercase tracking-widest ml-1">Name</label>
+                        <input 
+                          required
+                          type="text" 
+                          placeholder="Aapka Naam"
+                          value={whatsappForm.name}
+                          onChange={(e) => setWhatsappForm({...whatsappForm, name: e.target.value})}
+                          className="w-full p-3 rounded-xl border-none shadow-sm text-sm outline-none focus:ring-2 focus:ring-[#25D366]/50"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-black uppercase tracking-widest ml-1">Phone No</label>
+                        <input 
+                          required
+                          type="tel" 
+                          placeholder="WhatsApp Number"
+                          value={whatsappForm.phone}
+                          onChange={(e) => setWhatsappForm({...whatsappForm, phone: e.target.value})}
+                          className="w-full p-3 rounded-xl border-none shadow-sm text-sm outline-none focus:ring-2 focus:ring-[#25D366]/50"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-black uppercase tracking-widest ml-1">Enquiry for?</label>
+                        <textarea 
+                          required
+                          rows={3}
+                          placeholder="Product Order / Guide / Help..."
+                          value={whatsappForm.enquiry}
+                          onChange={(e) => setWhatsappForm({...whatsappForm, enquiry: e.target.value})}
+                          className="w-full p-3 rounded-xl border-none shadow-sm text-sm outline-none focus:ring-2 focus:ring-[#25D366]/50 resize-none"
+                        />
+                      </div>
+                      <button 
+                        type="submit"
+                        className="w-full py-3 mt-2 rounded-xl bg-[#25D366] text-white font-black text-sm uppercase tracking-widest shadow-xl shadow-[#25D366]/20 hover:bg-[#20ba5a] transition-all flex items-center justify-center gap-2"
+                      >
+                        Send Message
+                      </button>
+                    </form>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showAlerts && (
           <motion.div
             initial={{ opacity: 0, y: 20, x: 20 }}
             animate={{ opacity: 1, y: 0, x: 0 }}
             exit={{ opacity: 0, y: 20, x: 20 }}
-            className="fixed bottom-6 right-6 z-[60] w-64"
+            className="fixed bottom-32 right-4 md:bottom-40 md:right-6 z-[60] w-64 max-w-[calc(100vw-2rem)]"
           >
             <div className="bg-trust-navy/95 backdrop-blur-md text-white p-4 rounded-xl shadow-2xl border border-trust-gold/20 relative">
               <button 
@@ -457,27 +826,48 @@ export default function App() {
               >
                 <CheckCircle2 className="w-3 h-3 text-trust-gold" />
               </button>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-trust-gold animate-ping" />
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-trust-gold">Live Alert</span>
+              <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-trust-gold animate-ping" />
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-trust-gold">Live Updates</span>
+                </div>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                  {format(currentTime, 'EEE, MMM d')}
+                </span>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                 {isTokenTime && (
                   <div className="p-2 bg-trust-gold/10 rounded-lg border border-trust-gold/20">
-                    <p className="text-[10px] font-bold text-trust-gold uppercase tracking-widest mb-1">Maharaj Darshan Token</p>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[10px] font-bold text-trust-gold uppercase tracking-widest">Maharaj Token</p>
+                      <span className="text-[8px] font-black bg-trust-gold text-trust-navy px-1.5 py-0.5 rounded">Active Now</span>
+                    </div>
                     <p className="text-[11px] leading-tight text-white/90">
-                      Line starts at 4 PM. Distribution at 11 PM. First come first serve (90 Men/90 Women).
+                      Line starts at 4 PM. Distribution at 11 PM. First come first serve.
                     </p>
                   </div>
                 )}
-                {activeAlerts.map((alert, i) => (
-                  <div key={i} className="group cursor-default">
-                    <h5 className="text-[11px] font-bold leading-tight group-hover:text-trust-gold transition-colors">{alert.event}</h5>
-                    <p className="text-[9px] text-slate-400 mt-0.5 flex items-center gap-1">
-                      <MapPin className="w-2 h-2" /> {alert.location}
-                    </p>
-                  </div>
-                ))}
+                {activeAlerts.length === 0 && !isTokenTime ? (
+                  <p className="text-[10px] text-slate-400 italic text-center py-4">No live updates at this moment. Radhe Radhe!</p>
+                ) : (
+                  activeAlerts.map((alert, i) => (
+                    <div key={i} className="group cursor-default p-2 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all">
+                      <div className="flex items-center justify-between mb-1">
+                        <h5 className="text-[11px] font-bold leading-tight group-hover:text-trust-gold transition-colors">
+                          {alert.event}
+                        </h5>
+                        {alert.time && (
+                          <span className="text-trust-gold text-[8px] font-black bg-trust-gold/10 px-1.5 py-0.5 rounded border border-trust-gold/20">
+                            Starts at {format(parse(alert.time, 'HH:mm', currentTime), 'hh:mm a')}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[9px] text-slate-400 mt-0.5 flex items-center gap-1">
+                        <MapPin className="w-2 h-2" /> {alert.location}
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </motion.div>
@@ -485,7 +875,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Hero Section */}
-      <header className="relative pt-32 pb-20 px-6 overflow-hidden">
+      <header className="relative pt-20 md:pt-32 pb-12 md:pb-20 px-6 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&q=80&w=2000" 
@@ -635,7 +1025,7 @@ export default function App() {
                 }
               }
             }}
-            className="grid gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {loading ? (
               <div className="py-20 text-center">
@@ -657,11 +1047,11 @@ export default function App() {
                     }}
                     className="card-trust overflow-hidden"
                   >
-                    <div className="p-6 flex flex-col md:flex-row items-center gap-8">
-                      <div className="flex-1 text-center md:text-left">
-                        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
-                          <h4 className="text-2xl font-black text-trust-navy">{temple.name}</h4>
-                          <div className="flex items-center justify-center md:justify-start gap-2">
+                    <div className="p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8">
+                      <div className="flex-1 text-left">
+                        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 mb-2">
+                          <h4 className="text-xl md:text-2xl font-black text-trust-navy">{temple.name}</h4>
+                          <div className="flex items-center justify-start gap-2">
                             <span className={cn(
                               "text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-2",
                               status.isOpen ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-rose-50 text-rose-500 border border-rose-100"
@@ -691,7 +1081,7 @@ export default function App() {
                           )}
                         </div>
 
-                        <div className="flex flex-wrap justify-center md:justify-start gap-6 mb-4">
+                        <div className="flex flex-wrap justify-start gap-4 md:gap-6 mb-4">
                           <div className="flex items-center gap-2 text-sm font-bold text-trust-gold">
                             <Clock className="w-4 h-4" />
                             <span>{status.nextEvent}</span>
@@ -874,7 +1264,7 @@ export default function App() {
               <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
                 <h4 className="font-bold text-trust-navy mb-3">How to get Premanand Ji Maharaj Ekantik Vartalap token?</h4>
                 <p className="text-sm text-slate-500 leading-relaxed">
-                  To get an Ekantik Vartalap token, you need to visit the Premanand Maharaj ashram location on Sunrakh road early in the morning. Token distribution time usually starts at 2:00 AM. For the latest Shri Hit Radha Kripa Parivar updates and Maharaj ji vartalap registration process, follow our special events section.
+                  Visit the ashram before the timings at morning 6am to get the updated timings from 24*7 enquiry counter or call at 7777048484 anytime to get the recent updates.
                 </p>
               </div>
               <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
@@ -999,33 +1389,88 @@ export default function App() {
                     </p>
                   </div>
                   {user.email === 'shivamojha1422000@gmail.com' && temples.length > 0 && (
-                    <div className="space-y-3">
-                      <button 
-                        onClick={migrateInitialData}
-                        disabled={isMigrating}
-                        className={cn(
-                          "w-full py-3 rounded-xl text-sm font-bold transition-all",
-                          isMigrating ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-trust-gold text-trust-navy hover:shadow-lg"
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Data Management</p>
+                        <button 
+                          onClick={migrateInitialData}
+                          disabled={isMigrating}
+                          className={cn(
+                            "w-full py-3 rounded-xl text-sm font-bold transition-all",
+                            isMigrating ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-trust-gold text-trust-navy hover:shadow-lg"
+                          )}
+                        >
+                          {isMigrating ? 'Syncing Sacred Data...' : 'Sync Local Data to Cloud'}
+                        </button>
+                        
+                        {isMigrating && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-[10px] font-bold text-trust-navy uppercase tracking-widest">
+                              <span>Progress</span>
+                              <span>{migrationProgress}%</span>
+                            </div>
+                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${migrationProgress}%` }}
+                                className="h-full bg-trust-gold"
+                              />
+                            </div>
+                          </div>
                         )}
-                      >
-                        {isMigrating ? 'Syncing Sacred Data...' : 'Sync Local Data to Cloud'}
-                      </button>
-                      
-                      {isMigrating && (
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-[10px] font-bold text-trust-navy uppercase tracking-widest">
-                            <span>Progress</span>
-                            <span>{migrationProgress}%</span>
-                          </div>
-                          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <motion.div 
-                              initial={{ width: 0 }}
-                              animate={{ width: `${migrationProgress}%` }}
-                              className="h-full bg-trust-gold"
-                            />
-                          </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer Enquiries ({enquiries.length})</p>
+                        <div className="max-h-60 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                          {enquiries.length === 0 ? (
+                            <p className="text-[10px] text-slate-400 italic text-center py-4">No enquiries yet.</p>
+                          ) : (
+                            enquiries.map(enquiry => (
+                              <div key={enquiry.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                                <div className="flex justify-between items-start">
+                                  <p className="text-xs font-black text-trust-navy">{enquiry.name}</p>
+                                  <p className="text-[8px] text-slate-400">
+                                    {enquiry.timestamp?.toDate ? format(enquiry.timestamp.toDate(), 'MMM d, h:mm a') : 'Just now'}
+                                  </p>
+                                </div>
+                                <p className="text-[10px] font-bold text-[#25D366]">{enquiry.phone}</p>
+                                <p className="text-[10px] text-slate-600 leading-tight">{enquiry.enquiry}</p>
+                                <div className="pt-2 flex gap-2">
+                                  <a 
+                                    href={`https://wa.me/${enquiry.phone.replace(/\D/g, '')}`} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="text-[9px] font-black text-[#25D366] uppercase tracking-widest hover:underline"
+                                  >
+                                    Reply on WhatsApp
+                                  </a>
+                                </div>
+                              </div>
+                            ))
+                          )}
                         </div>
-                      )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Manage Events</p>
+                        <div className="max-h-40 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                          {events.map(event => (
+                            <div key={event.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-100">
+                              <div className="overflow-hidden">
+                                <p className="text-xs font-bold text-trust-navy truncate">{event.event}</p>
+                                <p className="text-[9px] text-slate-400">{event.time || 'No time set'}</p>
+                              </div>
+                              <button 
+                                onClick={() => setEditingEvent(event)}
+                                className="px-3 py-1 rounded-lg bg-trust-navy text-white text-[10px] font-bold"
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
                   <div className="flex gap-3">
@@ -1049,7 +1494,63 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Edit Temple Modal */}
+      {/* Edit Event Modal */}
+      <AnimatePresence>
+        {editingEvent && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[120] bg-trust-navy/60 backdrop-blur-sm flex items-center justify-center p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl"
+            >
+              <h3 className="text-2xl font-black text-trust-navy mb-6">Edit Event</h3>
+              <form onSubmit={handleUpdateEvent} className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Event Name</label>
+                  <input 
+                    type="text" 
+                    value={editingEvent.event}
+                    onChange={(e) => setEditingEvent({...editingEvent, event: e.target.value})}
+                    className="w-full p-3 rounded-xl border border-slate-100 bg-slate-50 text-sm font-medium outline-none focus:ring-2 focus:ring-trust-gold/20"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Time (HH:mm - 24hr format)</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. 18:30"
+                    value={editingEvent.time || ''}
+                    onChange={(e) => setEditingEvent({...editingEvent, time: e.target.value})}
+                    className="w-full p-3 rounded-xl border border-slate-100 bg-slate-50 text-sm font-medium outline-none focus:ring-2 focus:ring-trust-gold/20"
+                  />
+                  <p className="text-[9px] text-slate-400 mt-1 italic">Leave empty to show for the whole month.</p>
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button 
+                    type="button"
+                    onClick={() => setEditingEvent(null)}
+                    className="flex-1 py-3 rounded-xl bg-slate-100 text-sm font-bold text-trust-navy"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="flex-1 py-3 rounded-xl bg-trust-navy text-white text-sm font-bold shadow-lg shadow-trust-navy/20"
+                  >
+                    Save Event
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {editingTemple && (
           <motion.div 

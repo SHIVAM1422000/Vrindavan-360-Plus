@@ -51,11 +51,25 @@
       "type": "object",
       "properties": {
         "id": { "type": "number" },
-        "name": { "type": "string" },
-        "date": { "type": "string" },
-        "description": { "type": "string" }
+        "event": { "type": "string" },
+        "location": { "type": "string" },
+        "business_angle": { "type": "string" },
+        "months": { "type": "array", "items": { "type": "number" } },
+        "time": { "type": "string", "description": "Time in HH:mm format" }
       },
-      "required": ["id", "name", "date"]
+      "required": ["id", "event", "location", "months"]
+    },
+    "Enquiry": {
+      "title": "Enquiry",
+      "description": "A customer enquiry from the WhatsApp form.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "enquiry": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "phone", "enquiry", "timestamp"]
     }
   },
   "firestore": {
@@ -66,6 +80,10 @@
     "/events/{eventId}": {
       "schema": "SpecialEvent",
       "description": "Collection of special events."
+    },
+    "/enquiries/{enquiryId}": {
+      "schema": "Enquiry",
+      "description": "Collection of customer enquiries."
     }
   }
 }

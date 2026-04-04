@@ -20,9 +20,11 @@
 // Document ID: eventId (string)
 // Fields:
 //   - id: number (required)
-//   - name: string (required)
-//   - date: string (required)
-//   - description: string (optional)
+//   - event: string (required)
+//   - location: string (required)
+//   - business_angle: string (optional)
+//   - months: list (required)
+//   - time: string (optional, HH:mm format)
 //
 // ===============================================================
 
@@ -50,6 +52,14 @@ service cloud.firestore {
              data.maps_url is string && data.maps_url.matches("^https://.*");
     }
 
+    function isValidEvent(data) {
+      return data.id is number &&
+             data.event is string && data.event.size() > 0 && data.event.size() < 100 &&
+             data.location is string && data.location.size() > 0 &&
+             data.months is list &&
+             (!('time' in data) || (data.time is string && data.time.matches("^\\d{2}:\\d{2}$")));
+    }
+
     match /temples/{templeId} {
       // Publicly readable for visitors
       allow read: if true;
@@ -60,9 +70,28 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    match /events/{eventId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
+    // Collection: enquiries
+// Document ID: auto-generated
+// Fields:
+//   - name: string (required, 1-100 chars)
+//   - phone: string (required, 10-15 chars)
+//   - enquiry: string (required, 1-1000 chars)
+//   - timestamp: timestamp (required)
+
+function isValidEnquiry(data) {
+  return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+         data.phone is string && data.phone.size() >= 10 && data.phone.size() <= 15 &&
+         data.enquiry is string && data.enquiry.size() > 0 && data.enquiry.size() <= 1000 &&
+         data.timestamp is timestamp;
+}
+
+match /enquiries/{enquiryId} {
+  // Anyone can create an enquiry
+  allow create: if isValidEnquiry(request.resource.data);
+  // Only admin can read/list enquiries
+  allow read, list: if isAdmin();
+  // No updates or deletes allowed for enquiries
+  allow update, delete: if false;
+}
   }
 }

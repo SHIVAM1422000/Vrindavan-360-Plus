@@ -506,9 +506,9 @@ export default function App() {
               <Star className="w-3 h-3 text-trust-gold fill-trust-gold" />
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-trust-navy">Sacred Heritage Guide</span>
             </div>
-            <h2 className="text-5xl md:text-7xl font-serif italic font-bold text-trust-navy mb-8 leading-[1.1] tracking-tight">
+            <h1 className="text-5xl md:text-7xl font-serif italic font-bold text-trust-navy mb-8 leading-[1.1] tracking-tight">
               Experience the <span className="text-trust-gold">Divine Essence</span> of Vrindavan
-            </h2>
+            </h1>
             <p className="text-lg md:text-xl text-slate-500 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
               Your premium digital companion for real-time temple timings, sacred events, and curated spiritual insights in the heart of Braj.
             </p>

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://vrindavan360plus.vercel.app/sitemap.xml
+Sitemap: https://vrindavan360.site/sitemap.xml

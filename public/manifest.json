@@ -1,0 +1,21 @@
+{
+  "name": "Vrindavan 360 Plus",
+  "short_name": "Vrindavan 360",
+  "description": "Real-time Vrindavan temple timings and spiritual guide.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDFDFD",
+  "theme_color": "#00416A",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/vrindavan/192/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://picsum.photos/seed/vrindavan/512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

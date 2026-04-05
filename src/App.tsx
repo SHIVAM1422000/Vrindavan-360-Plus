@@ -900,7 +900,7 @@ export default function App() {
               Experience the <span className="text-trust-gold">Divine Essence</span> of Vrindavan
             </h1>
             <p className="text-lg md:text-xl text-slate-500 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
-              Your premium digital companion for real-time temple timings, sacred events, and curated spiritual insights in the heart of Braj.
+              Your premium digital companion for real-time Vrindavan temple timings today, Banke Bihari mandir opening time, sacred events, and Premanand Ji Maharaj updates in the heart of Braj.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <a href="#temples" className="btn-primary px-10 py-4 text-sm shadow-2xl shadow-trust-mint/20">
@@ -1025,7 +1025,7 @@ export default function App() {
                 }
               }
             }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid gap-6"
           >
             {loading ? (
               <div className="py-20 text-center">
@@ -1047,11 +1047,11 @@ export default function App() {
                     }}
                     className="card-trust overflow-hidden"
                   >
-                    <div className="p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8">
-                      <div className="flex-1 text-left">
-                        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 mb-2">
-                          <h4 className="text-xl md:text-2xl font-black text-trust-navy">{temple.name}</h4>
-                          <div className="flex items-center justify-start gap-2">
+                    <div className="p-6 flex flex-col md:flex-row items-center gap-8">
+                      <div className="flex-1 text-center md:text-left">
+                        <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
+                          <h4 className="text-2xl font-black text-trust-navy">{temple.name}</h4>
+                          <div className="flex items-center justify-center md:justify-start gap-2">
                             <span className={cn(
                               "text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-2",
                               status.isOpen ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-rose-50 text-rose-500 border border-rose-100"
@@ -1081,7 +1081,7 @@ export default function App() {
                           )}
                         </div>
 
-                        <div className="flex flex-wrap justify-start gap-4 md:gap-6 mb-4">
+                        <div className="flex flex-wrap justify-center md:justify-start gap-6 mb-4">
                           <div className="flex items-center gap-2 text-sm font-bold text-trust-gold">
                             <Clock className="w-4 h-4" />
                             <span>{status.nextEvent}</span>
@@ -1316,12 +1316,12 @@ export default function App() {
           </div>
           
           <div>
-            <h5 className="font-bold text-trust-navy mb-6">Support</h5>
+            <h5 className="font-bold text-trust-navy mb-6">Popular Searches</h5>
             <ul className="space-y-4 text-sm text-slate-500">
-              <li><a href="#" className="hover:text-trust-mint transition-colors">Contact Us</a></li>
-              <li><a href="#" className="hover:text-trust-mint transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-trust-mint transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-trust-mint transition-colors">Help Center</a></li>
+              <li><a href="#temples" className="hover:text-trust-mint transition-colors">Banke Bihari Timings</a></li>
+              <li><a href="#temples" className="hover:text-trust-mint transition-colors">Prem Mandir Light Show</a></li>
+              <li><a href="#temples" className="hover:text-trust-mint transition-colors">ISKCON Vrindavan Aarti</a></li>
+              <li><a href="#temples" className="hover:text-trust-mint transition-colors">Nidhivan Closing Time</a></li>
             </ul>
           </div>
         </div>

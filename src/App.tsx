@@ -748,12 +748,12 @@ export default function App() {
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-trust-gold/30 shadow-lg shadow-trust-navy/10 bg-white group relative shrink-0">
               <img 
-                src="/logo.png" 
+                src="/logo.png?v=1.1" 
                 alt="Vrindavan 360 Plus" 
-                className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 referrerPolicy="no-referrer"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/vrindavan-spirit/200/200';
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544061101-494203977b97?auto=format&fit=crop&q=80&w=200';
                 }}
               />
               <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-full" />
@@ -1156,15 +1156,16 @@ export default function App() {
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-trust-navy/5 rounded-full -ml-24 -mb-24 blur-2xl" />
               
               <div className="relative z-10">
-                <div className="flex flex-col md:flex-row md:items-center gap-6 mb-12 border-b border-slate-100 pb-10">
-                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-gradient-to-br from-trust-navy to-trust-navy/80 flex items-center justify-center shadow-2xl shadow-trust-navy/20 shrink-0 rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                <div className="flex flex-col md:flex-row md:items-center gap-8 mb-12 border-b border-slate-100 pb-10">
+                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-white flex items-center justify-center shadow-xl shadow-trust-navy/5 shrink-0 border border-trust-gold/10 transition-all duration-500 group-hover:shadow-trust-gold/30 overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-trust-gold/5 to-transparent pointer-events-none" />
                     <img 
-                      src="/logo.png" 
+                      src="/logo.png?v=1.1" 
                       alt="Shree Hit Ras Naagri Sharan" 
-                      className="w-full h-full object-cover rounded-3xl opacity-90"
+                      className="w-full h-full object-contain p-2 opacity-100 transition-transform duration-700 group-hover:scale-105"
                       referrerPolicy="no-referrer"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/vrindavan-guide/200/200';
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544061101-494203977b97?auto=format&fit=crop&q=80&w=200';
                       }}
                     />
                   </div>

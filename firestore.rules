@@ -70,6 +70,23 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /events/{eventId} {
+      // Publicly readable for visitors
+      allow read: if true;
+      
+      // Only admin can create or update
+      allow create: if isAdmin() && isValidEvent(request.resource.data);
+      allow update: if isAdmin() && isValidEvent(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /admins/{adminId} {
+      // Publicly readable so app can check admin status
+      allow read: if true;
+      // Only admin can manage other admins
+      allow write: if isAdmin();
+    }
+
     // Collection: enquiries
 // Document ID: auto-generated
 // Fields:

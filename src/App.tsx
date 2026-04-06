@@ -560,8 +560,20 @@ export default function App() {
         logAnalyticsEvent('login', { method: 'Google', user_email: currentUser.email });
       }
     });
-    return () => unsubscribe();
-  }, []);
+
+    // Safety timeout for auth
+    const authTimeout = setTimeout(() => {
+      if (!isAuthReady) {
+        console.warn('Auth state check timed out. Proceeding...');
+        setIsAuthReady(true);
+      }
+    }, 5000);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(authTimeout);
+    };
+  }, [isAuthReady]);
 
   useEffect(() => {
     if (isUserAdmin(user?.email)) {
@@ -610,13 +622,25 @@ export default function App() {
         setTemples(templeList);
         setLoading(false);
       } else {
-        fetch('/api/temples').then(res => res.json()).then(data => {
-          setTemples(data);
-          setLoading(false);
-        });
+        fetch('/api/temples')
+          .then(res => res.json())
+          .then(data => {
+            setTemples(data);
+            setLoading(false);
+          })
+          .catch(err => {
+            console.error('Fetch temples failed:', err);
+            setLoading(false);
+          });
       }
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'temples');
+      console.error('Temples onSnapshot error:', error);
+      setLoading(false);
+      // Fallback to API if Firestore fails
+      fetch('/api/temples')
+        .then(res => res.json())
+        .then(data => setTemples(data))
+        .catch(err => console.error('Fallback fetch failed:', err));
     });
 
     const eventsQuery = query(collection(db, 'events'), orderBy('id', 'asc'));
@@ -625,15 +649,24 @@ export default function App() {
       if (eventList.length > 0) {
         setEvents(eventList);
       } else {
-        fetch('/api/events').then(res => res.json()).then(data => setEvents(data));
+        fetch('/api/events')
+          .then(res => res.json())
+          .then(data => setEvents(data))
+          .catch(err => console.error('Fetch events failed:', err));
       }
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'events');
+      console.error('Events onSnapshot error:', error);
+      fetch('/api/events')
+        .then(res => res.json())
+        .then(data => setEvents(data))
+        .catch(err => console.error('Fallback fetch failed:', err));
     });
 
     const unsubscribeAdmins = onSnapshot(collection(db, 'admins'), (snapshot) => {
       const adminList = snapshot.docs.map(doc => doc.data().email as string);
       setAdmins(adminList);
+    }, (error) => {
+      console.error('Admins onSnapshot error:', error);
     });
 
     const timer = setInterval(() => {
@@ -688,6 +721,17 @@ export default function App() {
       openingTime: nextOpen
     };
   };
+
+  // Fail-safe to ensure loading spinner doesn't stay forever
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn('Loading timed out. Forcing loading state to false.');
+        setLoading(false);
+      }
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const filteredTemples = useMemo(() => {
     return temples

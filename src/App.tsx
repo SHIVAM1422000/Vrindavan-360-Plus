@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Clock, 
@@ -642,7 +642,7 @@ export default function App() {
       const month = now.getMonth();
       const newSeason = (month >= 2 && month <= 9) ? 'summer' : 'winter';
       if (newSeason !== season) setSeason(newSeason);
-    }, 1000);
+    }, 30000); // Update every 30 seconds instead of 1 second for performance
 
     return () => {
       unsubscribeTemples();
@@ -689,41 +689,45 @@ export default function App() {
     };
   };
 
-  const filteredTemples = temples
-    .filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .filter(t => !filterOpen || getTempleStatus(t).isOpen)
-    .filter(t => !filterWhereNow || (getTempleStatus(t).isOpen && t.aarti.some(a => {
-      const aartiTime = parse(a.time, 'HH:mm', currentTime);
-      const diff = differenceInMinutes(aartiTime, currentTime);
-      return diff > 0 && diff <= 120; // Upcoming Aarti within 2 hours
-    })))
-    .sort((a, b) => {
-      if (sortBy === 'mostly_visited') return b.visitor_count - a.visitor_count;
-      if (sortBy === 'name') return a.name.localeCompare(b.name);
-      const statusA = getTempleStatus(a);
-      const statusB = getTempleStatus(b);
-      if (!statusA.openingTime || !statusB.openingTime) return 0;
-      return statusA.openingTime.getTime() - statusB.openingTime.getTime();
-    });
+  const filteredTemples = useMemo(() => {
+    return temples
+      .filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .filter(t => !filterOpen || getTempleStatus(t).isOpen)
+      .filter(t => !filterWhereNow || (getTempleStatus(t).isOpen && t.aarti.some(a => {
+        const aartiTime = parse(a.time, 'HH:mm', currentTime);
+        const diff = differenceInMinutes(aartiTime, currentTime);
+        return diff > 0 && diff <= 120; // Upcoming Aarti within 2 hours
+      })))
+      .sort((a, b) => {
+        if (sortBy === 'mostly_visited') return b.visitor_count - a.visitor_count;
+        if (sortBy === 'name') return a.name.localeCompare(b.name);
+        const statusA = getTempleStatus(a);
+        const statusB = getTempleStatus(b);
+        if (!statusA.openingTime || !statusB.openingTime) return 0;
+        return statusA.openingTime.getTime() - statusB.openingTime.getTime();
+      });
+  }, [temples, searchQuery, filterOpen, filterWhereNow, sortBy, currentTime, season]);
 
-  const activeAlerts = events.filter(e => {
-    const isCorrectMonth = e.months.includes(currentTime.getMonth());
-    if (!isCorrectMonth) return false;
-    
-    if (e.time) {
-      try {
-        const eventTime = parse(e.time, 'HH:mm', currentTime);
-        // Show alert 3 hours before and up to 1 hour after the event
-        const startWindow = set(eventTime, { hours: eventTime.getHours() - 3 });
-        const endWindow = set(eventTime, { hours: eventTime.getHours() + 1 });
-        return isWithinInterval(currentTime, { start: startWindow, end: endWindow });
-      } catch (err) {
-        console.error('Error parsing event time:', e.time, err);
-        return true; // Fallback to showing if parsing fails
+  const activeAlerts = useMemo(() => {
+    return events.filter(e => {
+      const isCorrectMonth = e.months.includes(currentTime.getMonth());
+      if (!isCorrectMonth) return false;
+      
+      if (e.time) {
+        try {
+          const eventTime = parse(e.time, 'HH:mm', currentTime);
+          // Show alert 3 hours before and up to 1 hour after the event
+          const startWindow = set(eventTime, { hours: eventTime.getHours() - 3 });
+          const endWindow = set(eventTime, { hours: eventTime.getHours() + 1 });
+          return isWithinInterval(currentTime, { start: startWindow, end: endWindow });
+        } catch (err) {
+          console.error('Error parsing event time:', e.time, err);
+          return true; // Fallback to showing if parsing fails
+        }
       }
-    }
-    return true; // If no time specified, show for the whole month
-  });
+      return true; // If no time specified, show for the whole month
+    });
+  }, [events, currentTime]);
 
   // Special Maharaj Token Alert
   const currentHour = currentTime.getHours();
@@ -759,9 +763,9 @@ export default function App() {
               <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-full" />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-lg md:text-xl font-serif italic font-black text-trust-navy leading-none tracking-tight">
+              <div className="text-lg md:text-xl font-serif italic font-black text-trust-navy leading-none tracking-tight">
                 Vrindavan <span className="text-trust-gold">360 Plus</span>
-              </h1>
+              </div>
               <p className="text-[8px] md:text-[9px] font-black text-trust-navy/50 uppercase tracking-[0.15em] mt-1">
                 {t('hero_title_1')} {t('hero_title_2')}
               </p>
@@ -1129,9 +1133,10 @@ export default function App() {
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&q=80&w=2000" 
-            alt="Vrindavan Yamuna Ghat" 
+            alt="Sacred Yamuna Ghat in Vrindavan" 
             className="w-full h-full object-cover opacity-10 scale-105"
             referrerPolicy="no-referrer"
+            loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#FDFCF9]/0 via-[#FDFCF9]/80 to-[#FDFCF9]" />
         </div>
@@ -1161,9 +1166,10 @@ export default function App() {
                     <div className="absolute inset-0 bg-gradient-to-tr from-trust-gold/5 to-transparent pointer-events-none" />
                     <img 
                       src="/logo.png?v=1.1" 
-                      alt="Shree Hit Ras Naagri Sharan" 
+                      alt="Ras Naagri Sharan - Vrindavan 360 Plus Founder" 
                       className="w-full h-full object-contain p-2 opacity-100 transition-transform duration-700 group-hover:scale-105"
                       referrerPolicy="no-referrer"
+                      loading="lazy"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544061101-494203977b97?auto=format&fit=crop&q=80&w=200';
                       }}

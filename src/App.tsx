@@ -624,7 +624,7 @@ export default function App() {
         }
         return prev;
       });
-    }, 5000);
+    }, 3000); // Reduced to 3 seconds for faster fallback
 
     return () => {
       unsubscribe();
@@ -761,7 +761,7 @@ export default function App() {
     const isEvening = isValid(eveningOpen) && isValid(eveningClose) && isWithinInterval(now, { start: eveningOpen, end: eveningClose });
 
     if (isMorning || isEvening) {
-      const upcomingAarti = temple.aarti.find(a => {
+      const upcomingAarti = (temple.aarti || []).find(a => {
         const aTime = safeParseTime(a.time, now);
         return isValid(aTime) && aTime > now;
       });
@@ -793,7 +793,7 @@ export default function App() {
     const timer = setTimeout(() => {
       console.warn('Loading timed out. Forcing loading state to false.');
       setLoading(false);
-    }, 8000); // Reduced to 8 seconds for better UX
+    }, 5000); // Reduced to 5 seconds for better UX
     return () => clearTimeout(timer);
   }, [loading]);
 
@@ -846,8 +846,14 @@ export default function App() {
       .sort((a, b) => {
         if (sortBy === 'mostly_visited') return b.visitor_count - a.visitor_count;
         if (sortBy === 'name') return a.name.localeCompare(b.name);
-        if (!a.status.openingTime || !b.status.openingTime) return 0;
-        return a.status.openingTime.getTime() - b.status.openingTime.getTime();
+        
+        const timeA = a.status.openingTime?.getTime();
+        const timeB = b.status.openingTime?.getTime();
+        
+        if (!timeA || isNaN(timeA)) return 1;
+        if (!timeB || isNaN(timeB)) return -1;
+        
+        return timeA - timeB;
       });
   }, [temples, searchQuery, filterOpen, filterWhereNow, sortBy, currentTime, season]);
 

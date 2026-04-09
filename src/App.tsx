@@ -21,7 +21,7 @@ import {
   Quote,
   Compass
 } from 'lucide-react';
-import { format, isWithinInterval, parse, set, differenceInMinutes } from 'date-fns';
+import { format, isWithinInterval, parse, set, differenceInMinutes, subHours, addMinutes, subMinutes, isValid } from 'date-fns';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { 
@@ -40,6 +40,7 @@ import {
 } from 'firebase/firestore';
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { db, auth, logAnalyticsEvent } from './firebase';
+import logo from './assets/logo.png';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -129,6 +130,8 @@ interface SpecialEvent {
   business_angle: string;
   months: number[];
   time?: string; // Optional time in HH:mm format
+  date?: string; // Optional date in YYYY-MM-DD format
+  is_recurring?: boolean; // If true, shows as "DAILY"
 }
 
 interface Enquiry {
@@ -278,6 +281,8 @@ export default function App() {
       trusted: "TRUSTED",
       verified_badge: "VERIFIED",
       secure: "SECURE",
+      special_events_title: "Special Events & Festivals",
+      special_events_desc: "Don't miss these sacred celebrations in Shri Dham Vrindavan.",
     },
     hi: {
       nav_temples: "मंदिर",
@@ -346,10 +351,59 @@ export default function App() {
       trusted: "विश्वसनीय",
       verified_badge: "सत्यापित",
       secure: "सुरक्षित",
+      special_events_title: "विशेष कार्यक्रम और उत्सव",
+      special_events_desc: "श्री धाम वृन्दावन के इन पवित्र उत्सवों को न चूकें।",
     }
   };
 
   const t = (key: keyof typeof translations.en) => translations[language][key];
+
+  const safeParseTime = (timeStr: string | undefined, referenceDate: Date = currentTime) => {
+    if (!timeStr || timeStr === 'Closed') return new Date(NaN);
+    try {
+      // Try HH:mm first
+      let parsed = parse(timeStr, 'HH:mm', referenceDate);
+      if (isValid(parsed)) return parsed;
+      
+      // Try hh:mm a
+      parsed = parse(timeStr, 'hh:mm a', referenceDate);
+      if (isValid(parsed)) return parsed;
+      
+      return new Date(NaN);
+    } catch (e) {
+      return new Date(NaN);
+    }
+  };
+
+  const safeFormatTime = (timeStr: string | undefined, formatStr: string = 'hh:mm a') => {
+    const parsed = safeParseTime(timeStr);
+    if (isValid(parsed)) return format(parsed, formatStr);
+    return timeStr || 'Time Not Set';
+  };
+
+  const safeFormatDate = (dateStr: string | undefined, formatStr: string = 'do MMMM, yyyy') => {
+    if (!dateStr) return 'Date Not Set';
+    try {
+      const parsed = parse(dateStr, 'yyyy-MM-dd', new Date());
+      if (isValid(parsed)) return format(parsed, formatStr);
+      return 'Invalid Date';
+    } catch (e) {
+      return 'Invalid Date';
+    }
+  };
+
+  const isLiveNow = (timeStr: string | undefined) => {
+    const parsed = safeParseTime(timeStr);
+    if (!isValid(parsed)) return false;
+    try {
+      return isWithinInterval(currentTime, { 
+        start: subMinutes(parsed, 15), 
+        end: addMinutes(parsed, 30) 
+      });
+    } catch (e) {
+      return false;
+    }
+  };
   const [isMigrating, setIsMigrating] = useState(false);
   const [migrationProgress, setMigrationProgress] = useState(0);
   const [admins, setAdmins] = useState<string[]>([]);
@@ -563,17 +617,20 @@ export default function App() {
 
     // Safety timeout for auth
     const authTimeout = setTimeout(() => {
-      if (!isAuthReady) {
-        console.warn('Auth state check timed out. Proceeding...');
-        setIsAuthReady(true);
-      }
+      setIsAuthReady(prev => {
+        if (!prev) {
+          console.warn('Auth state check timed out. Proceeding...');
+          return true;
+        }
+        return prev;
+      });
     }, 5000);
 
     return () => {
       unsubscribe();
       clearTimeout(authTimeout);
     };
-  }, [isAuthReady]);
+  }, []); // Removed isAuthReady from dependencies to fix infinite loop
 
   useEffect(() => {
     if (isUserAdmin(user?.email)) {
@@ -590,6 +647,10 @@ export default function App() {
       return () => unsubscribe();
     }
   }, [user]);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   useEffect(() => {
     const badgeTimer = setTimeout(() => {
@@ -691,16 +752,19 @@ export default function App() {
     if (!schedule) return { isOpen: false, nextEvent: 'Closed', openingTime: null };
 
     const now = currentTime;
-    const morningOpen = parse(schedule.morning.open, 'HH:mm', now);
-    const morningClose = parse(schedule.morning.close, 'HH:mm', now);
-    const eveningOpen = parse(schedule.evening.open, 'HH:mm', now);
-    const eveningClose = parse(schedule.evening.close, 'HH:mm', now);
+    const morningOpen = safeParseTime(schedule.morning.open, now);
+    const morningClose = safeParseTime(schedule.morning.close, now);
+    const eveningOpen = safeParseTime(schedule.evening.open, now);
+    const eveningClose = safeParseTime(schedule.evening.close, now);
 
-    const isMorning = isWithinInterval(now, { start: morningOpen, end: morningClose });
-    const isEvening = isWithinInterval(now, { start: eveningOpen, end: eveningClose });
+    const isMorning = isValid(morningOpen) && isValid(morningClose) && isWithinInterval(now, { start: morningOpen, end: morningClose });
+    const isEvening = isValid(eveningOpen) && isValid(eveningClose) && isWithinInterval(now, { start: eveningOpen, end: eveningClose });
 
     if (isMorning || isEvening) {
-      const upcomingAarti = temple.aarti.find(a => parse(a.time, 'HH:mm', now) > now);
+      const upcomingAarti = temple.aarti.find(a => {
+        const aTime = safeParseTime(a.time, now);
+        return isValid(aTime) && aTime > now;
+      });
       return { 
         isOpen: true, 
         nextEvent: upcomingAarti ? `${t('next_aarti')}: ${upcomingAarti.name} at ${upcomingAarti.time}` : t('open_darshan'),
@@ -717,59 +781,105 @@ export default function App() {
 
     return { 
       isOpen: false, 
-      nextEvent: `${t('next_open')} ${format(nextOpen, 'hh:mm a')}`,
+      nextEvent: isValid(nextOpen) ? `${t('next_open')} ${format(nextOpen, 'hh:mm a')}` : t('status_closed'),
       openingTime: nextOpen
     };
   };
 
   // Fail-safe to ensure loading spinner doesn't stay forever
   useEffect(() => {
+    if (!loading) return;
+    
     const timer = setTimeout(() => {
-      if (loading) {
-        console.warn('Loading timed out. Forcing loading state to false.');
-        setLoading(false);
-      }
-    }, 15000);
+      console.warn('Loading timed out. Forcing loading state to false.');
+      setLoading(false);
+    }, 8000); // Reduced to 8 seconds for better UX
     return () => clearTimeout(timer);
   }, [loading]);
 
+  const searchKeywordsMap: Record<string, string[]> = {
+    "Banke Bihari Mandir": ["Banke Bihari Mandir summer timings 2026", "Banke Bihari online darshan booking myth", "Banke Bihari eyes mystery", "Why bells are not allowed in Banke Bihari", "Hariyali Teej Jhoola festival Banke Bihari", "Phool Bangla dates in Banke Bihari 2026"],
+    "Prem Mandir": ["Prem Mandir light show timings today"],
+    "ISKCON Vrindavan": ["ISKCON Vrindavan aarti schedule", "Is photography allowed in ISKCON Vrindavan", "Iskon Govinda's restaurant menu and price"],
+    "Nidhivan": ["Nidhivan closing time and mystery", "Science behind Nidhivan trees bending", "Can we visit Nidhivan after 7 PM", "Supernatural experiences in Nidhivan at night"],
+    "Radha Raman Mandir": ["Radha Raman Mandir darshan guide"],
+    "Radha Vallabh Mandir": ["Radha Vallabh Mandir bhog timings"],
+    "Seva Kunj": ["Seva Kunj history and entry fee"],
+    "Shahji Temple": ["Shahji Temple marble architecture history"],
+    "Rangji Temple": ["Rangji Temple South Indian style architecture"],
+    "Gopeshwar Mahadev": ["Gopeshwar Mahadev Shivratri timings"],
+    "Katyayani Peeth": ["Katyayani Peeth Vrindavan shaktipeeth history"],
+    "Pagal Baba Mandir": ["Pagal Baba Mandir 8-storey significance"],
+    "Vrindavan Chandrodaya Mandir": ["Vrindavan Chandrodaya Mandir project update"],
+    "Goverdhan": ["Goverdhan Parikrama distance and route map", "Chhappan Bhog event in Goverdhan", "Kusum Sarovar Goverdhan history", "Jatipura Goverdhan bhog process", "How to reach Goverdhan from Vrindavan"],
+    "Barsana": ["Barsana Radha Rani Mandir 250 steps guide", "Radhashtami 2026 Barsana celebrations", "Nandgaon to Barsana distance", "Holi 2026 dates for Vrindavan and Barsana"],
+    "Gokul": ["Gokul Raman Reti address and timings", "Brahmand Ghat Gokul significance"],
+    "Premanand Ji Maharaj": ["Premanand ji maharaj darshan timings today", "How to get ekantik vartalap token 2026", "Premanand ji maharaj ashram address soveri kund", "Premanand ji maharaj satsang time morning", "Vrindavan maharaj ji darshan rules", "Night stay near Premanand ji ashram", "Premanand ji maharaj health updates today", "How to meet Maharaj ji for personal question"]
+  };
+
   const filteredTemples = useMemo(() => {
     return temples
-      .filter(t => t.name.toLowerCase().includes(searchQuery.toLowerCase()))
-      .filter(t => !filterOpen || getTempleStatus(t).isOpen)
-      .filter(t => !filterWhereNow || (getTempleStatus(t).isOpen && t.aarti.some(a => {
-        const aartiTime = parse(a.time, 'HH:mm', currentTime);
-        const diff = differenceInMinutes(aartiTime, currentTime);
-        return diff > 0 && diff <= 120; // Upcoming Aarti within 2 hours
-      })))
+      .map(t => ({ ...t, status: getTempleStatus(t) }))
+      .filter(temple => {
+        const queryLower = searchQuery.toLowerCase();
+        const extraKeywords = searchKeywordsMap[temple.name] || [];
+        const matchesSearch = temple.name.toLowerCase().includes(queryLower) ||
+                             temple.specialty.toLowerCase().includes(queryLower) ||
+                             extraKeywords.some(k => k.toLowerCase().includes(queryLower));
+        if (!matchesSearch) return false;
+        
+        if (filterOpen) {
+          return temple.status.isOpen;
+        }
+        
+        if (filterWhereNow) {
+          return temple.status.isOpen && temple.aarti.some(a => {
+            const aartiTime = safeParseTime(a.time, currentTime);
+            if (!isValid(aartiTime)) return false;
+            const diff = differenceInMinutes(aartiTime, currentTime);
+            return diff > 0 && diff <= 120; // Upcoming Aarti within 2 hours
+          });
+        }
+        
+        return true;
+      })
       .sort((a, b) => {
         if (sortBy === 'mostly_visited') return b.visitor_count - a.visitor_count;
         if (sortBy === 'name') return a.name.localeCompare(b.name);
-        const statusA = getTempleStatus(a);
-        const statusB = getTempleStatus(b);
-        if (!statusA.openingTime || !statusB.openingTime) return 0;
-        return statusA.openingTime.getTime() - statusB.openingTime.getTime();
+        if (!a.status.openingTime || !b.status.openingTime) return 0;
+        return a.status.openingTime.getTime() - b.status.openingTime.getTime();
       });
   }, [temples, searchQuery, filterOpen, filterWhereNow, sortBy, currentTime, season]);
 
   const activeAlerts = useMemo(() => {
     return events.filter(e => {
-      const isCorrectMonth = e.months.includes(currentTime.getMonth());
-      if (!isCorrectMonth) return false;
+      // 1. If date is specified, it must be today
+      if (e.date) {
+        const todayStr = format(currentTime, 'yyyy-MM-dd');
+        if (e.date !== todayStr) return false;
+      } else {
+        // 2. If no date, check if current month is included
+        const isCorrectMonth = e.months && e.months.includes(currentTime.getMonth() + 1); // getMonth is 0-indexed
+        if (!isCorrectMonth) return false;
+      }
       
+      // 3. Time-based filtering
       if (e.time) {
+        const eventTime = safeParseTime(e.time, currentTime);
+        if (!isValid(eventTime)) return true; // Show if time is malformed but it's the right day/month
+
+        // Show alert 4 hours before and up to 30 mins after the event
+        const startWindow = subHours(eventTime, 4);
+        const endWindow = addMinutes(eventTime, 30);
+        
         try {
-          const eventTime = parse(e.time, 'HH:mm', currentTime);
-          // Show alert 3 hours before and up to 1 hour after the event
-          const startWindow = set(eventTime, { hours: eventTime.getHours() - 3 });
-          const endWindow = set(eventTime, { hours: eventTime.getHours() + 1 });
           return isWithinInterval(currentTime, { start: startWindow, end: endWindow });
         } catch (err) {
-          console.error('Error parsing event time:', e.time, err);
-          return true; // Fallback to showing if parsing fails
+          return true;
         }
       }
-      return true; // If no time specified, show for the whole month
+      
+      return true; // If no time specified, show for the whole day/month
     });
   }, [events, currentTime]);
 
@@ -796,10 +906,12 @@ export default function App() {
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-trust-gold/30 shadow-lg shadow-trust-navy/10 bg-white group relative shrink-0">
               <img 
-                src="/logo.png?v=1.1" 
-                alt="Vrindavan 360 Plus" 
+                src={logo} 
+                alt="Vrindavan 360 Plus Logo" 
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 referrerPolicy="no-referrer"
+                loading="eager"
+                decoding="async"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544061101-494203977b97?auto=format&fit=crop&q=80&w=200';
                 }}
@@ -839,11 +951,16 @@ export default function App() {
               <a href="#how-we-help" className="text-xs font-bold uppercase tracking-widest text-trust-navy hover:text-trust-gold transition-colors">Process</a>
               <button 
                 onClick={() => setShowAlerts(!showAlerts)}
-                className="relative p-2 text-trust-navy hover:bg-slate-50 rounded-full transition-all"
+                className={cn(
+                  "relative p-2 rounded-full transition-all",
+                  (activeAlerts.length > 0 || isTokenTime) 
+                    ? "bg-trust-gold/10 text-trust-gold hover:bg-trust-gold/20" 
+                    : "text-trust-navy hover:bg-slate-50"
+                )}
               >
-                <Bell className="w-5 h-5" />
+                <Bell className={cn("w-5 h-5", (activeAlerts.length > 0 || isTokenTime) && "animate-bounce")} />
                 {(activeAlerts.length > 0 || isTokenTime) && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-trust-gold rounded-full border-2 border-white"></span>
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-600 rounded-full border-2 border-white shadow-sm"></span>
                 )}
               </button>
             </div>
@@ -862,10 +979,21 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Floating Notification Button (Right, above WhatsApp) */}
+      {/* Floating Live Updates Button (Right, above WhatsApp) */}
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
+        animate={{ 
+          scale: 1, 
+          opacity: 1,
+          boxShadow: activeAlerts.length > 0 ? [
+            "0 0 0px rgba(212, 175, 55, 0)", 
+            "0 0 20px rgba(212, 175, 55, 0.4)", 
+            "0 0 0px rgba(212, 175, 55, 0)"
+          ] : "0 10px 25px -5px rgba(0,0,0,0.1)"
+        }}
+        transition={{ 
+          boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+        }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => {
@@ -874,18 +1002,20 @@ export default function App() {
         }}
         className={cn(
           "fixed bottom-24 right-4 md:bottom-24 md:right-6 z-[60] w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center transition-all border-4 border-white",
-          showAlerts ? "bg-trust-gold text-trust-navy" : "bg-trust-navy text-white"
+          showAlerts ? "bg-trust-gold text-trust-navy" : (activeAlerts.length > 0 ? "bg-trust-gold text-trust-navy" : "bg-trust-navy text-white")
         )}
       >
         <Bell className={cn("w-5 h-5 md:w-6 md:h-6", (activeAlerts.length > 0 || isTokenTime) && "animate-bounce")} />
-        <motion.div 
-          animate={{ opacity: [1, 0.5, 1] }}
-          transition={{ duration: 1, repeat: Infinity }}
-          className="absolute -top-2 -right-2 bg-rose-600 text-white text-[7px] md:text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-lg border border-white/20"
-        >
-          <span className="w-1 h-1 bg-white rounded-full animate-ping" />
-          LIVE
-        </motion.div>
+        {(activeAlerts.length > 0 || isTokenTime) && (
+          <motion.div 
+            animate={{ opacity: [1, 0.5, 1] }}
+            transition={{ duration: 1, repeat: Infinity }}
+            className="absolute -top-2 -right-2 bg-rose-600 text-white text-[7px] md:text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-lg border border-white/20"
+          >
+            <span className="w-1 h-1 bg-white rounded-full animate-ping" />
+            LIVE
+          </motion.div>
+        )}
         {(activeAlerts.length > 0 || isTokenTime) && (
           <span className="absolute -bottom-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-trust-gold rounded-full border-2 border-white text-[8px] md:text-[9px] font-black flex items-center justify-center text-trust-navy shadow-sm">
             {activeAlerts.length + (isTokenTime ? 1 : 0)}
@@ -1156,7 +1286,7 @@ export default function App() {
                         </h5>
                         {alert.time && (
                           <span className="text-trust-gold text-[8px] font-black bg-trust-gold/10 px-1.5 py-0.5 rounded border border-trust-gold/20">
-                            Starts at {format(parse(alert.time, 'HH:mm', currentTime), 'hh:mm a')}
+                            Starts at {safeFormatTime(alert.time)}
                           </span>
                         )}
                       </div>
@@ -1175,13 +1305,14 @@ export default function App() {
       {/* Hero Section */}
       <header className="relative pt-20 md:pt-32 pb-12 md:pb-20 px-6 overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&q=80&w=2000" 
-            alt="Sacred Yamuna Ghat in Vrindavan" 
-            className="w-full h-full object-cover opacity-10 scale-105"
-            referrerPolicy="no-referrer"
-            loading="lazy"
-          />
+            <img 
+              src="https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&q=80&w=2000" 
+              alt="Sacred Yamuna Ghat in Vrindavan - Spiritual Heritage" 
+              className="w-full h-full object-cover opacity-10 scale-105"
+              referrerPolicy="no-referrer"
+              loading="lazy"
+              decoding="async"
+            />
           <div className="absolute inset-0 bg-gradient-to-b from-[#FDFCF9]/0 via-[#FDFCF9]/80 to-[#FDFCF9]" />
         </div>
 
@@ -1206,16 +1337,17 @@ export default function App() {
               
               <div className="relative z-10">
                 <div className="flex flex-col md:flex-row md:items-center gap-8 mb-12 border-b border-slate-100 pb-10">
-                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-white flex items-center justify-center shadow-xl shadow-trust-navy/5 shrink-0 border border-trust-gold/10 transition-all duration-500 group-hover:shadow-trust-gold/30 overflow-hidden relative">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-trust-gold/5 to-transparent pointer-events-none" />
+                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white flex items-center justify-center shadow-xl shadow-trust-navy/5 shrink-0 border-4 border-trust-gold/20 transition-all duration-500 group-hover:shadow-trust-gold/40 overflow-hidden relative p-1">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-trust-gold/10 to-transparent pointer-events-none z-10" />
                     <img 
-                      src="/logo.png?v=1.1" 
-                      alt="Ras Naagri Sharan - Vrindavan 360 Plus Founder" 
-                      className="w-full h-full object-contain p-2 opacity-100 transition-transform duration-700 group-hover:scale-105"
+                      src={logo} 
+                      alt="Ras Naagri Sharan - Vrindavan 360 Plus Founder and Spiritual Guide" 
+                      className="w-full h-full object-contain opacity-100 transition-transform duration-700 group-hover:scale-110"
                       referrerPolicy="no-referrer"
                       loading="lazy"
+                      decoding="async"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544061101-494203977b97?auto=format&fit=crop&q=80&w=200';
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544061101-494203977b97?auto=format&fit=crop&q=80&w=400';
                       }}
                     />
                   </div>
@@ -1406,7 +1538,7 @@ export default function App() {
               </div>
             ) : filteredTemples.length > 0 ? (
               filteredTemples.map((temple) => {
-                const status = getTempleStatus(temple);
+                const status = temple.status;
                 const isExpanded = expandedTemple === temple.id;
                 const currentTimings = temple.timings[season];
 
@@ -1594,7 +1726,13 @@ export default function App() {
                   <Quote className="w-8 h-8 text-trust-mint mb-6 opacity-50" />
                   <p className="text-slate-300 italic mb-8 leading-relaxed">"{t.content}"</p>
                   <div className="flex items-center gap-4">
-                    <img src={t.avatar} className="w-12 h-12 rounded-full border-2 border-trust-mint" alt={t.name} />
+                    <img 
+                      src={t.avatar} 
+                      className="w-12 h-12 rounded-full border-2 border-trust-mint" 
+                      alt={`Testimonial from ${t.name} - Vrindavan 360 Plus User`} 
+                      loading="lazy"
+                      decoding="async"
+                    />
                     <div>
                       <h5 className="font-bold text-white">{t.name}</h5>
                       <p className="text-[10px] font-bold text-trust-gold uppercase tracking-widest">{t.role}</p>
@@ -1622,39 +1760,132 @@ export default function App() {
             </div>
           </div>
         </section>
-        {/* SEO & FAQ Section */}
+        {/* Vrindavan Master Guide 2026 - SEO SECTION */}
         <section className="mb-32 px-6">
-          <div className="max-w-4xl mx-auto">
-            <h3 className="text-3xl font-black text-trust-navy mb-12 text-center">Vrindavan Travel Guide & FAQ</h3>
-            <div className="grid gap-8">
-              <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
-                <h4 className="font-bold text-trust-navy mb-3">What are the Vrindavan temple timings today?</h4>
-                <p className="text-sm text-slate-500 leading-relaxed">
-                  Temple timings in Vrindavan vary by season. Generally, Banke Bihari mandir opening time is 7:45 AM in summer and 8:45 AM in winter. ISKCON Vrindavan aarti schedule starts with Mangala Aarti at 4:30 AM. For real-time updates on Radha Raman temple darshan time and Nidhivan closing time, use our live dashboard above.
-                </p>
-              </div>
-              <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
-                <h4 className="font-bold text-trust-navy mb-3">How to get Premanand Ji Maharaj Ekantik Vartalap token?</h4>
-                <p className="text-sm text-slate-500 leading-relaxed mb-4">
-                  Visit the ashram before the timings at morning 6am to get the updated timings from 24*7 enquiry counter or call at 7777048484 anytime to get the recent updates.
-                </p>
-                <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full w-fit border border-emerald-100">
-                  <ShieldCheck className="w-3 h-3" />
-                  Verified from Ashram of Maharaj ji
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-black text-trust-navy mb-4">Vrindavan Master Guide 2026</h2>
+              <p className="text-slate-500 max-w-2xl mx-auto">Your comprehensive spiritual and logistical companion for Shri Dham Vrindavan. Stay updated, stay safe, and experience the divine.</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Premanand Ji Maharaj Section */}
+              <article className="bg-white p-8 rounded-[2.5rem] border border-trust-gold/10 shadow-xl shadow-trust-navy/5">
+                <div className="w-12 h-12 bg-trust-gold/10 rounded-2xl flex items-center justify-center text-trust-gold mb-6">
+                  <Heart className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-black text-trust-navy mb-4">Premanand Ji Maharaj Guide</h3>
+                <ul className="space-y-3 text-sm text-slate-600">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-trust-gold mt-0.5 shrink-0" />
+                    <span><strong>Ekantik Vartalap Token:</strong> Process starts at 2:00 AM at Soveri Kund Ashram.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-trust-gold mt-0.5 shrink-0" />
+                    <span><strong>Darshan Rules:</strong> Maintain silence, follow ashram discipline, and check health updates.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-trust-gold mt-0.5 shrink-0" />
+                    <span><strong>Satsang:</strong> Morning satsang timings are usually fixed; arrive early for seating.</span>
+                  </li>
+                </ul>
+              </article>
+
+              {/* Temple Timings & Architecture */}
+              <article className="bg-white p-8 rounded-[2.5rem] border border-trust-gold/10 shadow-xl shadow-trust-navy/5">
+                <div className="w-12 h-12 bg-trust-gold/10 rounded-2xl flex items-center justify-center text-trust-gold mb-6">
+                  <Clock className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-black text-trust-navy mb-4">Temple Timings & Mysteries</h3>
+                <ul className="space-y-3 text-sm text-slate-600">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-trust-gold mt-0.5 shrink-0" />
+                    <span><strong>Banke Bihari:</strong> Summer timings 2026 are now active. No bells allowed.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-trust-gold mt-0.5 shrink-0" />
+                    <span><strong>Nidhivan:</strong> Closes at 7 PM. Mystery of bending trees and night experiences.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-trust-gold mt-0.5 shrink-0" />
+                    <span><strong>Architecture:</strong> Rangji Temple (South Indian) & Shahji Temple (Marble).</span>
+                  </li>
+                </ul>
+              </article>
+
+              {/* Travel & Logistics */}
+              <article className="bg-white p-8 rounded-[2.5rem] border border-trust-gold/10 shadow-xl shadow-trust-navy/5">
+                <div className="w-12 h-12 bg-trust-gold/10 rounded-2xl flex items-center justify-center text-trust-gold mb-6">
+                  <Navigation className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-black text-trust-navy mb-4">Travel & Logistics</h3>
+                <ul className="space-y-3 text-sm text-slate-600">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-trust-gold mt-0.5 shrink-0" />
+                    <span><strong>Transport:</strong> Delhi to Vrindavan via Yamuna Expressway. E-rickshaw fares 2026.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-trust-gold mt-0.5 shrink-0" />
+                    <span><strong>Stay:</strong> Budget dharamshalas near Banke Bihari & safe hotels for solo travelers.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-trust-gold mt-0.5 shrink-0" />
+                    <span><strong>Tips:</strong> Avoid monkey menace; use luggage lockers in temples.</span>
+                  </li>
+                </ul>
+              </article>
+            </div>
+
+            {/* Detailed FAQ Grid */}
+            <div className="mt-16 grid md:grid-cols-2 gap-8">
+              <div className="space-y-8">
+                <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                  <h4 className="font-bold text-trust-navy mb-3">How to reach Goverdhan from Vrindavan?</h4>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    You can take a private taxi or local bus. Goverdhan Parikrama is approx 21km. Visit Kusum Sarovar and Mansi Ganga.
+                  </p>
+                </div>
+                <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                  <h4 className="font-bold text-trust-navy mb-3">What to wear in Vrindavan temples?</h4>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    Modest traditional clothing is recommended. Avoid shorts or revealing clothes to respect the sacred environment.
+                  </p>
+                </div>
+                <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                  <h4 className="font-bold text-trust-navy mb-3">Where to buy original Tulsi Mala?</h4>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    Look for certified shops near Loi Bazaar or Radha Damodar temple. Authentic Brijvasi shops are best.
+                  </p>
                 </div>
               </div>
-              <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
-                <h4 className="font-bold text-trust-navy mb-3">Where can I find scooty on rent in Vrindavan?</h4>
-                <p className="text-sm text-slate-500 leading-relaxed">
-                  You can find the best bike rental near Vrindavan railway station or near the ISKCON temple. Prices for scooty on rent in Vrindavan usually range from ₹300 to ₹500 per day. E-rickshaws are also a great alternative for short distances between Banke Bihari and other temples.
-                </p>
+
+              <div className="space-y-8">
+                <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                  <h4 className="font-bold text-trust-navy mb-3">Festivals & Dates 2026</h4>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    Akshaya Tritiya Charan Darshan, Guru Purnima Mela, Janmashtami 2026, and Holi 2026 dates are critical for planning.
+                  </p>
+                </div>
+                <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                  <h4 className="font-bold text-trust-navy mb-3">Braj Mysteries & Stories</h4>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    Explore the science behind Nidhivan trees, the mystery of Banke Bihari's eyes, and stories of Radha Rani's love.
+                  </p>
+                </div>
+                <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
+                  <h4 className="font-bold text-trust-navy mb-3">Food & Shopping Guide</h4>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    Best lassi near Banke Bihari, authentic Brijvasi thali, and shopping for Laddu Gopal dresses in local markets.
+                  </p>
+                </div>
               </div>
-              <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
-                <h4 className="font-bold text-trust-navy mb-3">Are there rooms near Banke Bihari temple?</h4>
-                <p className="text-sm text-slate-500 leading-relaxed">
-                  Yes, there are many dharamshalas in Vrindavan with affordable prices starting from ₹500. For a more comfortable stay, look for hotels near Raman Reti or Sunrakh road. We also provide contacts for local guides to help you find the best accommodation and online Prasad delivery services.
-                </p>
-              </div>
+            </div>
+
+            {/* Keyword Cloud for SEO */}
+            <div className="mt-16 pt-16 border-t border-slate-100">
+              <p className="text-[10px] text-slate-300 leading-loose text-center">
+                Keywords: Vrindavan 360 Plus guide, Vrindavan live darshan today YouTube, Latest news from Vrindavan today, Braj Dham Yatra 2026, Vrindavan temple opening status now, Krishna Janmabhoomi Mathura timings, Yamuna Aarti timings at Vishram Ghat, Spiritual retreats in Vrindavan 2026, Vrindavan ashram for long stay, Local Brijvasi guide contact number, Radha Name ring and jewelry shops, Satvik food options in Vrindavan, Vrindavan local market closing day, Radha Vallabh Mandir bhog timings, Seva Kunj history and entry fee, Shahji Temple marble architecture history, Rangji Temple South Indian style architecture, Gopeshwar Mahadev Shivratri timings, Katyayani Peeth Vrindavan shaktipeeth history, Pagal Baba Mandir 8-storey significance, Vrindavan Chandrodaya Mandir project update.
+              </p>
             </div>
           </div>
         </section>
@@ -1794,16 +2025,35 @@ export default function App() {
                             </div>
                           </div>
                         )}
-                        <button 
-                          onClick={migrateInitialData}
-                          disabled={isMigrating}
-                          className={cn(
-                            "w-full py-3 rounded-xl text-sm font-bold transition-all",
-                            isMigrating ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-trust-gold text-trust-navy hover:shadow-lg"
-                          )}
-                        >
-                          {isMigrating ? 'Syncing Sacred Data...' : 'Sync Local Data to Cloud'}
-                        </button>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={migrateInitialData}
+                            disabled={isMigrating}
+                            className={cn(
+                              "flex-1 py-3 rounded-xl text-sm font-bold transition-all",
+                              isMigrating ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-trust-gold text-trust-navy hover:shadow-lg"
+                            )}
+                          >
+                            {isMigrating ? 'Syncing...' : 'Sync Cloud Data'}
+                          </button>
+                          <button 
+                            onClick={async () => {
+                              if (!confirm('This will update all events with default values for missing fields. Continue?')) return;
+                              for (const e of events) {
+                                const eventRef = doc(db, 'events', e.id.toString());
+                                await updateDoc(eventRef, {
+                                  is_recurring: e.is_recurring ?? true,
+                                  date: e.date ?? '',
+                                  time: e.time ?? '18:00'
+                                });
+                              }
+                              alert('Event data updated!');
+                            }}
+                            className="px-4 py-3 rounded-xl bg-slate-100 text-trust-navy text-sm font-bold border border-slate-200"
+                          >
+                            Fix Data
+                          </button>
+                        </div>
                         
                         {isMigrating && (
                           <div className="space-y-1">
@@ -1887,7 +2137,7 @@ export default function App() {
                                   <a 
                                     href={`https://wa.me/${enquiry.phone.replace(/\D/g, '')}`} 
                                     target="_blank" 
-                                    rel="noreferrer"
+                                    rel="noopener noreferrer"
                                     className="text-[9px] font-black text-[#25D366] uppercase tracking-widest hover:underline"
                                   >
                                     Reply on WhatsApp
@@ -1911,7 +2161,9 @@ export default function App() {
                                 location: 'Vrindavan',
                                 business_angle: '',
                                 months: [new Date().getMonth() + 1],
-                                time: ''
+                                time: '',
+                                date: '',
+                                is_recurring: true
                               });
                             }}
                             className="text-[10px] font-bold text-trust-navy hover:underline"
@@ -1994,7 +2246,45 @@ export default function App() {
                     onChange={(e) => setEditingEvent({...editingEvent, time: e.target.value})}
                     className="w-full p-3 rounded-xl border border-slate-100 bg-slate-50 text-sm font-medium outline-none focus:ring-2 focus:ring-trust-gold/20"
                   />
-                  <p className="text-[9px] text-slate-400 mt-1 italic">Leave empty to show for the whole month.</p>
+                  <p className="text-[9px] text-slate-400 mt-1 italic">Leave empty to show for the whole day.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date (Optional)</label>
+                    <input 
+                      type="date" 
+                      value={editingEvent.date || ''}
+                      onChange={(e) => setEditingEvent({...editingEvent, date: e.target.value})}
+                      className="w-full p-3 rounded-xl border border-slate-100 bg-slate-50 text-sm font-medium outline-none focus:ring-2 focus:ring-trust-gold/20"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 pt-6">
+                    <input 
+                      type="checkbox" 
+                      id="is_recurring"
+                      checked={editingEvent.is_recurring || false}
+                      onChange={(e) => setEditingEvent({...editingEvent, is_recurring: e.target.checked})}
+                      className="w-4 h-4 rounded border-slate-300 text-trust-navy focus:ring-trust-gold/20"
+                    />
+                    <label htmlFor="is_recurring" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest cursor-pointer">Recurring (Daily)</label>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Location</label>
+                  <input 
+                    type="text" 
+                    value={editingEvent.location}
+                    onChange={(e) => setEditingEvent({...editingEvent, location: e.target.value})}
+                    className="w-full p-3 rounded-xl border border-slate-100 bg-slate-50 text-sm font-medium outline-none focus:ring-2 focus:ring-trust-gold/20"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Business Info / Description</label>
+                  <textarea 
+                    value={editingEvent.business_angle}
+                    onChange={(e) => setEditingEvent({...editingEvent, business_angle: e.target.value})}
+                    className="w-full p-3 rounded-xl border border-slate-100 bg-slate-50 text-sm font-medium outline-none focus:ring-2 focus:ring-trust-gold/20 h-20"
+                  />
                 </div>
                 <div className="flex gap-3 pt-4">
                   <button 

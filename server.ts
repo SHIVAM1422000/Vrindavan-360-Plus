@@ -21,7 +21,7 @@ async function startServer() {
       specialty: "Spontaneous Darshan & Chamatkar",
       pro_tip: "Reach 30 mins early. Keep your glasses/phones safe from monkeys!",
       visitor_count: 50000,
-      last_verified: "Verified on 2 April",
+      last_verified: "Verified on 9 April, 2026",
       maps_url: "https://goo.gl/maps/bankebihari",
       image: "https://picsum.photos/seed/bihari/800/600",
       timings: {
@@ -46,7 +46,7 @@ async function startServer() {
       specialty: "Stunning Light Show & Architecture",
       pro_tip: "Visit after 6:30 PM to see the musical fountain and lighting.",
       visitor_count: 35000,
-      last_verified: "Verified on 2 April",
+      last_verified: "Verified on 9 April, 2026",
       maps_url: "https://goo.gl/maps/premmandir",
       image: "https://picsum.photos/seed/prem/800/600",
       timings: {
@@ -70,7 +70,7 @@ async function startServer() {
       specialty: "Divine Satsang & Ekantik Vartalap",
       pro_tip: "Maharaj ji usually gives darshan during his night walk (Pad-Yatra) around 2:00 AM.",
       visitor_count: 15000,
-      last_verified: "Verified from Maharaj ji's SEVAK on 2 April, 2026",
+      last_verified: "Verified on 9 April, 2026",
       maps_url: "https://maps.app.goo.gl/p7H8989Qf77777",
       image: "https://picsum.photos/seed/premanand/800/600",
       timings: {
@@ -94,7 +94,7 @@ async function startServer() {
       specialty: "Self-Manifested Deity (No human touch)",
       pro_tip: "The fire in the kitchen has been burning for 500+ years. Try the 'Khichdi' prasad.",
       visitor_count: 12000,
-      last_verified: "Verified on 2 April",
+      last_verified: "Verified on 9 April, 2026",
       maps_url: "https://goo.gl/maps/radharaman",
       image: "https://picsum.photos/seed/raman/800/600",
       timings: {
@@ -118,7 +118,7 @@ async function startServer() {
       specialty: "Raas Leela Sthal (Mysterious Night)",
       pro_tip: "No one is allowed after sunset. Even monkeys leave the premises.",
       visitor_count: 20000,
-      last_verified: "Verified on 2 April",
+      last_verified: "Verified on 9 April, 2026",
       maps_url: "https://goo.gl/maps/nidhivan",
       image: "https://picsum.photos/seed/nidhi/800/600",
       timings: {
@@ -137,8 +137,44 @@ async function startServer() {
     }
   ];
 
+  let events = [
+    {
+      id: 1,
+      event: "Akshaya Tritiya",
+      location: "Banke Bihari (Feet Darshan)",
+      business_angle: "Sandalwood (Chandan) Puja Kits",
+      months: [4, 5],
+      time: "17:00",
+      date: "2026-05-10",
+      is_recurring: false
+    },
+    {
+      id: 2,
+      event: "Yamuna Aarti",
+      location: "Vishram Ghat, Mathura",
+      business_angle: "Evening Boat Ride & Deep Daan",
+      months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      time: "18:45",
+      is_recurring: true
+    },
+    {
+      id: 3,
+      event: "Radha Ashtami",
+      location: "Barsana / Rawal",
+      business_angle: "Lathmar Holi Style Celebration",
+      months: [8, 9],
+      time: "04:30",
+      date: "2026-09-19",
+      is_recurring: false
+    }
+  ];
+
   app.get("/api/temples", (req, res) => {
     res.json(temples);
+  });
+
+  app.get("/api/events", (req, res) => {
+    res.json(events);
   });
 
   app.put("/api/temples/:id", (req, res) => {
@@ -146,6 +182,13 @@ async function startServer() {
     const updatedTemple = req.body;
     temples = temples.map(t => t.id === parseInt(id) ? updatedTemple : t);
     res.json(updatedTemple);
+  });
+
+  app.put("/api/events/:id", (req, res) => {
+    const { id } = req.params;
+    const updatedEvent = req.body;
+    events = events.map(e => e.id === parseInt(id) ? updatedEvent : e);
+    res.json(updatedEvent);
   });
 
   // Vite middleware for development (Front-end serving)

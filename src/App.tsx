@@ -184,6 +184,169 @@ const processSteps = [
   }
 ];
 
+const translations = {
+  en: {
+    nav_temples: "Temples",
+    nav_process: "Process",
+    hero_title_1: "Sahi jankari aur",
+    hero_title_2: "behetar anubhav",
+    hero_badge: "Sacred Heritage Guide",
+    intro_verified: "Verified Digital Guide",
+    intro_dhamvaasi: "Dham-Vaasi",
+    intro_radhe: "Radhe Radhe!",
+    intro_main: "Main **Shree Hit Ras Naagri Sharan**, pehle Software Engineer tha, par ab pichle 2.5 saal se Shri Dham Vrindavan mein vaas kar raha hoon aur [Param Pujya Premanand Ji Maharaj] ka shishya hoon.",
+    intro_goal: "Mera lakshya yatriyon ko thagi se bachana aur unhe Vrindavan ki sahi anubhuti karwana hai. Main yahan apne parivar aur Dham-vaas ki vyavastha ke liye ek Professional & Transparent Digital Companion ke roop mein kaam karta hoon.",
+    intro_tagline: "Sahi jankari, Behetar anubhav",
+    services_title: "Hamari Trusted Services",
+    service_1_title: "Real-time Live Updates",
+    service_1_desc: "Mandir ki bheed aur darshan ki sahi timing (Daily Updates).",
+    service_2_title: "Live Darshan Assistance",
+    service_2_desc: "Darshan mein hone wali pareshaniyon ka digital samadhan.",
+    service_3_title: "Genuine Product Orders",
+    service_3_desc: "Vrindavan ka asli Prasad, Poshak aur Kanthi (100% Shuddh).",
+    service_4_title: "Yatra Guide & Help",
+    service_4_desc: "Sahi rasta aur sahi jankari, bina kisi jhol ke.",
+    quote: "Sahi jankari aur behetar anubhav—yahi hamari pehchan hai.",
+    directory_title: "Sacred Temple Directory",
+    directory_desc: "Verified real-time status for the most sacred sites in Vrindavan.",
+    search_placeholder: "Search temples...",
+    filter_open: "Open Now",
+    filter_where_now: "Where to go now?",
+    lang_btn: "हिन्दी",
+    status_open: "Open",
+    status_closed: "Closed",
+    next_open: "Opens at",
+    next_aarti: "Next Aarti",
+    open_darshan: "Open for Darshan",
+    sort_by: "Sort By:",
+    sort_visited: "Mostly Visited",
+    sort_alpha: "Alphabetical",
+    sort_opening: "Opening Time",
+    loading_data: "Verifying Sacred Data...",
+    no_temples: "No temples found matching your search.",
+    summer: "Summer",
+    winter: "Winter",
+    morning: "Morning",
+    evening: "Evening",
+    aarti: "Aarti",
+    last_verified: "Last Verified",
+    visitor_count: "Visitors",
+    view_details: "View Details",
+    hide_details: "Hide Details",
+    location: "Location",
+    get_directions: "Get Directions",
+    whatsapp_help: "Need Help? WhatsApp Us",
+    navigate: "Navigate",
+    navigate_soveri: "Navigate to Soveri Kund",
+    specialty: "Specialty",
+    associated_event: "Associated Event",
+    verified: "Verified",
+    brijwasi_tip: "Brijwasi Tip",
+    edit_data: "Edit Data",
+    testimonials_title: "Trusted by Thousands of Seekers",
+    testimonials_desc: "Join a community of devotees who rely on Vrindavan 360 Plus.",
+    cta_title: "Ready for a Seamless Spiritual Journey?",
+    cta_desc: "Join thousands of devotees who rely on Vrindavan 360 for accurate timings, expert guides, and a truly immersive sacred experience.",
+    cta_btn_start: "Get Started Now",
+    cta_btn_learn: "Learn More",
+    trusted: "TRUSTED",
+    verified_badge: "VERIFIED",
+    secure: "SECURE",
+    special_events_title: "Special Events & Festivals",
+    special_events_desc: "Don't miss these sacred celebrations in Shri Dham Vrindavan.",
+  },
+  hi: {
+    nav_temples: "मंदिर",
+    nav_process: "प्रक्रिया",
+    hero_title_1: "सही जानकारी और",
+    hero_title_2: "बेहतर अनुभव",
+    hero_badge: "पवित्र विरासत गाइड",
+    intro_verified: "सत्यापित डिजिटल गाइड",
+    intro_dhamvaasi: "धाम-वासी",
+    intro_radhe: "राधे राधे! 🙏",
+    intro_main: "मैं **श्री हित रस नागरी शरण**, पहले सॉफ्टवेयर इंजीनियर था, पर अब पिछले 2.5 साल से श्री धाम वृन्दावन में वास कर रहा हूँ और [परम पूज्य प्रेमानंद जी महाराज] का शिष्य हूँ।",
+    intro_goal: "मेरा लक्ष्य यात्रियों को ठगी से बचाना और उन्हें वृन्दावन की सही अनुभूति करवाना है। मैं यहाँ अपने परिवार और धाम-वास की व्यवस्था के लिए एक प्रोफेशनल और पारदर्शी डिजिटल साथी के रूप में काम करता हूँ।",
+    intro_tagline: "सही जानकारी, बेहतर अनुभव",
+    services_title: "हमारी विश्वसनीय सेवाएँ",
+    service_1_title: "रियल-टाइम लाइव अपडेट",
+    service_1_desc: "मंदिर की भीड़ और दर्शन की सही टाइमिंग (दैनिक अपडेट)।",
+    service_2_title: "लाइव दर्शन सहायता",
+    service_2_desc: "दर्शन में होने वाली परेशानियों का डिजिटल समाधान।",
+    service_3_title: "असली उत्पाद ऑर्डर",
+    service_3_desc: "वृन्दावन का असली प्रसाद, पोशाक और कंठी (100% शुद्ध)।",
+    service_4_title: "यात्रा गाइड और सहायता",
+    service_4_desc: "सही रास्ता और सही जानकारी, बिना किसी झोल के।",
+    quote: "सही जानकारी और बेहतर अनुभव—यही हमारी पहचान है।",
+    directory_title: "पवित्र मंदिर निर्देशिका",
+    directory_desc: "वृन्दावन के सबसे पवित्र स्थलों के लिए सत्यापित रियल-टाइम स्थिति।",
+    search_placeholder: "मंदिर खोजें...",
+    filter_open: "अभी खुला है",
+    filter_where_now: "अभी कहाँ दर्शन होंगे?",
+    lang_btn: "English",
+    status_open: "खुला है",
+    status_closed: "बंद है",
+    next_open: "खुलने का समय",
+    next_aarti: "अगली आरती",
+    open_darshan: "दर्शन के लिए खुला है",
+    sort_by: "क्रमबद्ध करें:",
+    sort_visited: "सबसे अधिक देखे गए",
+    sort_alpha: "वर्णानुक्रम",
+    sort_opening: "खुलने का समय",
+    loading_data: "पवित्र डेटा सत्यापित किया जा रहा है...",
+    no_temples: "आपकी खोज से मेल खाने वाला कोई मंदिर नहीं मिला।",
+    summer: "गर्मी",
+    winter: "सर्दी",
+    morning: "सुबह",
+    evening: "शाम",
+    aarti: "आरती",
+    last_verified: "अंतिम बार सत्यापित",
+    visitor_count: "आगंतुक",
+    view_details: "विवरण देखें",
+    hide_details: "विवरण छुपाएं",
+    location: "स्थान",
+    get_directions: "दिशा-निर्देश प्राप्त करें",
+    whatsapp_help: "सहायता चाहिए? व्हाट्सएप करें",
+    navigate: "रास्ता देखें",
+    navigate_soveri: "सोवेरी कुंड का रास्ता देखें",
+    specialty: "विशेषता",
+    associated_event: "संबंधित कार्यक्रम",
+    verified: "सत्यापित",
+    brijwasi_tip: "बृजवासी टिप",
+    edit_data: "डेटा संपादित करें",
+    testimonials_title: "हजारों साधकों द्वारा विश्वसनीय",
+    testimonials_desc: "उन भक्तों के समुदाय में शामिल हों जो वृन्दावन 360 प्लस पर भरोसा करते हैं।",
+    cta_title: "एक निर्बाध आध्यात्मिक यात्रा के लिए तैयार हैं?",
+    cta_desc: "उन हजारों भक्तों में शामिल हों जो सटीक समय, विशेषज्ञ गाइड और वास्तव में गहरे पवित्र अनुभव के लिए वृन्दावन 360 पर भरोसा करते हैं।",
+    cta_btn_start: "अभी शुरू करें",
+    cta_btn_learn: "अधिक जानें",
+    trusted: "विश्वसनीय",
+    verified_badge: "सत्यापित",
+    secure: "सुरक्षित",
+    special_events_title: "विशेष कार्यक्रम और उत्सव",
+    special_events_desc: "श्री धाम वृन्दावन के इन पवित्र उत्सवों को न चूकें।",
+  }
+};
+
+const searchKeywordsMap: Record<string, string[]> = {
+  "Banke Bihari Mandir": ["Banke Bihari Mandir summer timings 2026", "Banke Bihari online darshan booking myth", "Banke Bihari eyes mystery", "Why bells are not allowed in Banke Bihari", "Hariyali Teej Jhoola festival Banke Bihari", "Phool Bangla dates in Banke Bihari 2026"],
+  "Prem Mandir": ["Prem Mandir light show timings today"],
+  "ISKCON Vrindavan": ["ISKCON Vrindavan aarti schedule", "Is photography allowed in ISKCON Vrindavan", "Iskon Govinda's restaurant menu and price"],
+  "Nidhivan": ["Nidhivan closing time and mystery", "Science behind Nidhivan trees bending", "Can we visit Nidhivan after 7 PM", "Supernatural experiences in Nidhivan at night"],
+  "Radha Raman Mandir": ["Radha Raman Mandir darshan guide"],
+  "Radha Vallabh Mandir": ["Radha Vallabh Mandir bhog timings"],
+  "Seva Kunj": ["Seva Kunj history and entry fee"],
+  "Shahji Temple": ["Shahji Temple marble architecture history"],
+  "Rangji Temple": ["Rangji Temple South Indian style architecture"],
+  "Gopeshwar Mahadev": ["Gopeshwar Mahadev Shivratri timings"],
+  "Katyayani Peeth": ["Katyayani Peeth Vrindavan shaktipeeth history"],
+  "Pagal Baba Mandir": ["Pagal Baba Mandir 8-storey significance"],
+  "Vrindavan Chandrodaya Mandir": ["Vrindavan Chandrodaya Mandir project update"],
+  "Goverdhan": ["Goverdhan Parikrama distance and route map", "Chhappan Bhog event in Goverdhan", "Kusum Sarovar Goverdhan history", "Jatipura Goverdhan bhog process", "How to reach Goverdhan from Vrindavan"],
+  "Barsana": ["Barsana Radha Rani Mandir 250 steps guide", "Radhashtami 2026 Barsana celebrations", "Nandgaon to Barsana distance", "Holi 2026 dates for Vrindavan and Barsana"],
+  "Gokul": ["Gokul Raman Reti address and timings", "Brahmand Ghat Gokul significance"],
+  "Premanand Ji Maharaj": ["Premanand ji maharaj darshan timings today", "How to get ekantik vartalap token 2026", "Premanand ji maharaj ashram address soveri kund", "Premanand ji maharaj satsang time morning", "Vrindavan maharaj ji darshan rules", "Night stay near Premanand ji ashram", "Premanand ji maharaj health updates today", "How to meet Maharaj ji for personal question"]
+};
+
 export default function App() {
   const [temples, setTemples] = useState<Temple[]>([]);
   const [events, setEvents] = useState<SpecialEvent[]>([]);
@@ -213,150 +376,7 @@ export default function App() {
   const [hasClickedWhatsapp, setHasClickedWhatsapp] = useState(false);
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
 
-  const translations = {
-    en: {
-      nav_temples: "Temples",
-      nav_process: "Process",
-      hero_title_1: "Sahi jankari aur",
-      hero_title_2: "behetar anubhav",
-      hero_badge: "Sacred Heritage Guide",
-      intro_verified: "Verified Digital Guide",
-      intro_dhamvaasi: "Dham-Vaasi",
-      intro_radhe: "Radhe Radhe!",
-      intro_main: "Main **Shree Hit Ras Naagri Sharan**, pehle Software Engineer tha, par ab pichle 2.5 saal se Shri Dham Vrindavan mein vaas kar raha hoon aur [Param Pujya Premanand Ji Maharaj] ka shishya hoon.",
-      intro_goal: "Mera lakshya yatriyon ko thagi se bachana aur unhe Vrindavan ki sahi anubhuti karwana hai. Main yahan apne parivar aur Dham-vaas ki vyavastha ke liye ek Professional & Transparent Digital Companion ke roop mein kaam karta hoon.",
-      intro_tagline: "Sahi jankari, Behetar anubhav",
-      services_title: "Hamari Trusted Services",
-      service_1_title: "Real-time Live Updates",
-      service_1_desc: "Mandir ki bheed aur darshan ki sahi timing (Daily Updates).",
-      service_2_title: "Live Darshan Assistance",
-      service_2_desc: "Darshan mein hone wali pareshaniyon ka digital samadhan.",
-      service_3_title: "Genuine Product Orders",
-      service_3_desc: "Vrindavan ka asli Prasad, Poshak aur Kanthi (100% Shuddh).",
-      service_4_title: "Yatra Guide & Help",
-      service_4_desc: "Sahi rasta aur sahi jankari, bina kisi jhol ke.",
-      quote: "Sahi jankari aur behetar anubhav—yahi hamari pehchan hai.",
-      directory_title: "Sacred Temple Directory",
-      directory_desc: "Verified real-time status for the most sacred sites in Vrindavan.",
-      search_placeholder: "Search temples...",
-      filter_open: "Open Now",
-      filter_where_now: "Where to go now?",
-      lang_btn: "हिन्दी",
-      status_open: "Open",
-      status_closed: "Closed",
-      next_open: "Opens at",
-      next_aarti: "Next Aarti",
-      open_darshan: "Open for Darshan",
-      sort_by: "Sort By:",
-      sort_visited: "Mostly Visited",
-      sort_alpha: "Alphabetical",
-      sort_opening: "Opening Time",
-      loading_data: "Verifying Sacred Data...",
-      no_temples: "No temples found matching your search.",
-      summer: "Summer",
-      winter: "Winter",
-      morning: "Morning",
-      evening: "Evening",
-      aarti: "Aarti",
-      last_verified: "Last Verified",
-      visitor_count: "Visitors",
-      view_details: "View Details",
-      hide_details: "Hide Details",
-      location: "Location",
-      get_directions: "Get Directions",
-      whatsapp_help: "Need Help? WhatsApp Us",
-      navigate: "Navigate",
-      navigate_soveri: "Navigate to Soveri Kund",
-      specialty: "Specialty",
-      associated_event: "Associated Event",
-      verified: "Verified",
-      brijwasi_tip: "Brijwasi Tip",
-      edit_data: "Edit Data",
-      testimonials_title: "Trusted by Thousands of Seekers",
-      testimonials_desc: "Join a community of devotees who rely on Vrindavan 360 Plus.",
-      cta_title: "Ready for a Seamless Spiritual Journey?",
-      cta_desc: "Join thousands of devotees who rely on Vrindavan 360 for accurate timings, expert guides, and a truly immersive sacred experience.",
-      cta_btn_start: "Get Started Now",
-      cta_btn_learn: "Learn More",
-      trusted: "TRUSTED",
-      verified_badge: "VERIFIED",
-      secure: "SECURE",
-      special_events_title: "Special Events & Festivals",
-      special_events_desc: "Don't miss these sacred celebrations in Shri Dham Vrindavan.",
-    },
-    hi: {
-      nav_temples: "मंदिर",
-      nav_process: "प्रक्रिया",
-      hero_title_1: "सही जानकारी और",
-      hero_title_2: "बेहतर अनुभव",
-      hero_badge: "पवित्र विरासत गाइड",
-      intro_verified: "सत्यापित डिजिटल गाइड",
-      intro_dhamvaasi: "धाम-वासी",
-      intro_radhe: "राधे राधे! 🙏",
-      intro_main: "मैं **श्री हित रस नागरी शरण**, पहले सॉफ्टवेयर इंजीनियर था, पर अब पिछले 2.5 साल से श्री धाम वृन्दावन में वास कर रहा हूँ और [परम पूज्य प्रेमानंद जी महाराज] का शिष्य हूँ।",
-      intro_goal: "मेरा लक्ष्य यात्रियों को ठगी से बचाना और उन्हें वृन्दावन की सही अनुभूति करवाना है। मैं यहाँ अपने परिवार और धाम-वास की व्यवस्था के लिए एक प्रोफेशनल और पारदर्शी डिजिटल साथी के रूप में काम करता हूँ।",
-      intro_tagline: "सही जानकारी, बेहतर अनुभव",
-      services_title: "हमारी विश्वसनीय सेवाएँ",
-      service_1_title: "रियल-टाइम लाइव अपडेट",
-      service_1_desc: "मंदिर की भीड़ और दर्शन की सही टाइमिंग (दैनिक अपडेट)।",
-      service_2_title: "लाइव दर्शन सहायता",
-      service_2_desc: "दर्शन में होने वाली परेशानियों का डिजिटल समाधान।",
-      service_3_title: "असली उत्पाद ऑर्डर",
-      service_3_desc: "वृन्दावन का असली प्रसाद, पोशाक और कंठी (100% शुद्ध)।",
-      service_4_title: "यात्रा गाइड और सहायता",
-      service_4_desc: "सही रास्ता और सही जानकारी, बिना किसी झोल के।",
-      quote: "सही जानकारी और बेहतर अनुभव—यही हमारी पहचान है।",
-      directory_title: "पवित्र मंदिर निर्देशिका",
-      directory_desc: "वृन्दावन के सबसे पवित्र स्थलों के लिए सत्यापित रियल-टाइम स्थिति।",
-      search_placeholder: "मंदिर खोजें...",
-      filter_open: "अभी खुला है",
-      filter_where_now: "अभी कहाँ दर्शन होंगे?",
-      lang_btn: "English",
-      status_open: "खुला है",
-      status_closed: "बंद है",
-      next_open: "खुलने का समय",
-      next_aarti: "अगली आरती",
-      open_darshan: "दर्शन के लिए खुला है",
-      sort_by: "क्रमबद्ध करें:",
-      sort_visited: "सबसे अधिक देखे गए",
-      sort_alpha: "वर्णानुक्रम",
-      sort_opening: "खुलने का समय",
-      loading_data: "पवित्र डेटा सत्यापित किया जा रहा है...",
-      no_temples: "आपकी खोज से मेल खाने वाला कोई मंदिर नहीं मिला।",
-      summer: "गर्मी",
-      winter: "सर्दी",
-      morning: "सुबह",
-      evening: "शाम",
-      aarti: "आरती",
-      last_verified: "अंतिम बार सत्यापित",
-      visitor_count: "आगंतुक",
-      view_details: "विवरण देखें",
-      hide_details: "विवरण छुपाएं",
-      location: "स्थान",
-      get_directions: "दिशा-निर्देश प्राप्त करें",
-      whatsapp_help: "सहायता चाहिए? व्हाट्सएप करें",
-      navigate: "रास्ता देखें",
-      navigate_soveri: "सोवेरी कुंड का रास्ता देखें",
-      specialty: "विशेषता",
-      associated_event: "संबंधित कार्यक्रम",
-      verified: "सत्यापित",
-      brijwasi_tip: "बृजवासी टिप",
-      edit_data: "डेटा संपादित करें",
-      testimonials_title: "हजारों साधकों द्वारा विश्वसनीय",
-      testimonials_desc: "उन भक्तों के समुदाय में शामिल हों जो वृन्दावन 360 प्लस पर भरोसा करते हैं।",
-      cta_title: "एक निर्बाध आध्यात्मिक यात्रा के लिए तैयार हैं?",
-      cta_desc: "उन हजारों भक्तों में शामिल हों जो सटीक समय, विशेषज्ञ गाइड और वास्तव में गहरे पवित्र अनुभव के लिए वृन्दावन 360 पर भरोसा करते हैं।",
-      cta_btn_start: "अभी शुरू करें",
-      cta_btn_learn: "अधिक जानें",
-      trusted: "विश्वसनीय",
-      verified_badge: "सत्यापित",
-      secure: "सुरक्षित",
-      special_events_title: "विशेष कार्यक्रम और उत्सव",
-      special_events_desc: "श्री धाम वृन्दावन के इन पवित्र उत्सवों को न चूकें।",
-    }
-  };
-
-  const t = (key: keyof typeof translations.en) => translations[language][key];
+  const t = (key: keyof typeof translations.en) => (translations[language] as any)[key];
 
   const safeParseTime = (timeStr: string | undefined, referenceDate: Date = currentTime) => {
     if (!timeStr || timeStr === 'Closed') return new Date(NaN);
@@ -624,7 +644,7 @@ export default function App() {
         }
         return prev;
       });
-    }, 3000); // Reduced to 3 seconds for faster fallback
+    }, 2000); // Reduced to 2 seconds for even faster fallback
 
     return () => {
       unsubscribe();
@@ -674,8 +694,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!isAuthReady) return;
-
+    // Start fetching immediately, don't wait for isAuthReady
     const templesQuery = query(collection(db, 'temples'), orderBy('visitor_count', 'desc'));
     const unsubscribeTemples = onSnapshot(templesQuery, (snapshot) => {
       const templeList = snapshot.docs.map(doc => doc.data() as Temple);
@@ -724,7 +743,7 @@ export default function App() {
     });
 
     const unsubscribeAdmins = onSnapshot(collection(db, 'admins'), (snapshot) => {
-      const adminList = snapshot.docs.map(doc => doc.data().email as string);
+      const adminList = snapshot.docs.map(doc => doc.data()?.email).filter(Boolean) as string[];
       setAdmins(adminList);
     }, (error) => {
       console.error('Admins onSnapshot error:', error);
@@ -747,43 +766,49 @@ export default function App() {
   }, [isAuthReady, season]);
 
   const getTempleStatus = (temple: Temple) => {
-    const schedule = temple.timings[season];
-    
-    if (!schedule) return { isOpen: false, nextEvent: 'Closed', openingTime: null };
+    try {
+      if (!temple || !temple.timings) return { isOpen: false, nextEvent: 'Closed', openingTime: null };
+      const schedule = temple.timings[season];
+      
+      if (!schedule || !schedule.morning || !schedule.evening) return { isOpen: false, nextEvent: 'Closed', openingTime: null };
 
-    const now = currentTime;
-    const morningOpen = safeParseTime(schedule.morning.open, now);
-    const morningClose = safeParseTime(schedule.morning.close, now);
-    const eveningOpen = safeParseTime(schedule.evening.open, now);
-    const eveningClose = safeParseTime(schedule.evening.close, now);
+      const now = currentTime;
+      const morningOpen = safeParseTime(schedule.morning.open, now);
+      const morningClose = safeParseTime(schedule.morning.close, now);
+      const eveningOpen = safeParseTime(schedule.evening.open, now);
+      const eveningClose = safeParseTime(schedule.evening.close, now);
 
-    const isMorning = isValid(morningOpen) && isValid(morningClose) && isWithinInterval(now, { start: morningOpen, end: morningClose });
-    const isEvening = isValid(eveningOpen) && isValid(eveningClose) && isWithinInterval(now, { start: eveningOpen, end: eveningClose });
+      const isMorning = isValid(morningOpen) && isValid(morningClose) && isWithinInterval(now, { start: morningOpen, end: morningClose });
+      const isEvening = isValid(eveningOpen) && isValid(eveningClose) && isWithinInterval(now, { start: eveningOpen, end: eveningClose });
 
-    if (isMorning || isEvening) {
-      const upcomingAarti = (temple.aarti || []).find(a => {
-        const aTime = safeParseTime(a.time, now);
-        return isValid(aTime) && aTime > now;
-      });
+      if (isMorning || isEvening) {
+        const upcomingAarti = (temple.aarti || []).find(a => {
+          const aTime = safeParseTime(a.time, now);
+          return isValid(aTime) && aTime > now;
+        });
+        return { 
+          isOpen: true, 
+          nextEvent: upcomingAarti ? `${t('next_aarti')}: ${upcomingAarti.name} at ${upcomingAarti.time}` : t('open_darshan'),
+          openingTime: isMorning ? morningOpen : eveningOpen
+        };
+      }
+
+      let nextOpen = morningOpen;
+      if (now > morningClose && now < eveningOpen) {
+        nextOpen = eveningOpen;
+      } else if (now > eveningClose) {
+        nextOpen = set(morningOpen, { date: now.getDate() + 1 });
+      }
+
       return { 
-        isOpen: true, 
-        nextEvent: upcomingAarti ? `${t('next_aarti')}: ${upcomingAarti.name} at ${upcomingAarti.time}` : t('open_darshan'),
-        openingTime: isMorning ? morningOpen : eveningOpen
+        isOpen: false, 
+        nextEvent: isValid(nextOpen) ? `${t('next_open')} ${format(nextOpen, 'hh:mm a')}` : t('status_closed'),
+        openingTime: nextOpen
       };
+    } catch (error) {
+      console.error('Error in getTempleStatus:', error);
+      return { isOpen: false, nextEvent: 'Error', openingTime: null };
     }
-
-    let nextOpen = morningOpen;
-    if (now > morningClose && now < eveningOpen) {
-      nextOpen = eveningOpen;
-    } else if (now > eveningClose) {
-      nextOpen = set(morningOpen, { date: now.getDate() + 1 });
-    }
-
-    return { 
-      isOpen: false, 
-      nextEvent: isValid(nextOpen) ? `${t('next_open')} ${format(nextOpen, 'hh:mm a')}` : t('status_closed'),
-      openingTime: nextOpen
-    };
   };
 
   // Fail-safe to ensure loading spinner doesn't stay forever
@@ -793,7 +818,7 @@ export default function App() {
     const timer = setTimeout(() => {
       console.warn('Loading timed out. Forcing loading state to false.');
       setLoading(false);
-    }, 5000); // Reduced to 5 seconds for better UX
+    }, 3500); // Reduced to 3.5 seconds for better UX
     return () => clearTimeout(timer);
   }, [loading]);
 
@@ -1540,7 +1565,13 @@ export default function App() {
             {loading ? (
               <div className="py-20 text-center">
                 <div className="w-12 h-12 border-4 border-trust-mint border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">{t('loading_data')}</p>
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-4">{t('loading_data')}</p>
+                <button 
+                  onClick={() => setLoading(false)}
+                  className="px-6 py-2 bg-trust-gold text-white rounded-full text-sm font-bold shadow-lg hover:bg-trust-gold/90 transition-all"
+                >
+                  Skip Loading
+                </button>
               </div>
             ) : filteredTemples.length > 0 ? (
               filteredTemples.map((temple) => {

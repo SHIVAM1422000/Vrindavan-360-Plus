@@ -1110,14 +1110,14 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowWhatsAppModal(false)}
-            className="fixed inset-0 z-[100] bg-trust-navy/60 backdrop-blur-sm flex items-center justify-center p-6"
+            className="fixed inset-0 z-[100] bg-trust-navy/60 backdrop-blur-sm overflow-y-auto flex items-start justify-center p-4 md:p-10"
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#E5DDD5] w-full max-w-md rounded-3xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-[#E5DDD5] w-full max-w-md rounded-3xl shadow-2xl relative overflow-hidden flex flex-col my-auto"
             >
               {/* WhatsApp Style Header */}
               <div className="bg-[#075E54] p-4 flex items-center gap-3 text-white shrink-0">
@@ -1989,13 +1989,13 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-trust-navy/60 backdrop-blur-sm flex items-center justify-center p-6"
+            className="fixed inset-0 z-[100] bg-trust-navy/60 backdrop-blur-sm overflow-y-auto flex items-start justify-center p-4 md:p-10"
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl"
+              className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl my-auto"
             >
               {!user ? (
                 <div className="space-y-6">
@@ -2254,13 +2254,13 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[120] bg-trust-navy/60 backdrop-blur-sm flex items-center justify-center p-6"
+            className="fixed inset-0 z-[120] bg-trust-navy/60 backdrop-blur-sm overflow-y-auto flex items-start justify-center p-4 md:p-10"
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl"
+              className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl my-auto"
             >
               <h3 className="text-2xl font-black text-trust-navy mb-6">Edit Event</h3>
               <form onSubmit={handleUpdateEvent} className="space-y-4">
@@ -2356,13 +2356,13 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[110] bg-trust-navy/60 backdrop-blur-sm flex items-center justify-center p-6 overflow-y-auto"
+            className="fixed inset-0 z-[110] bg-trust-navy/60 backdrop-blur-sm overflow-y-auto flex items-start justify-center p-4 md:p-10"
           >
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
-              className="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl my-8 max-h-[90vh] flex flex-col"
+              className="bg-white w-full max-w-lg rounded-3xl p-8 shadow-2xl my-auto flex flex-col"
             >
               <h3 className="text-2xl font-black text-trust-navy mb-6">Edit {editingTemple.name}</h3>
               <form onSubmit={handleUpdateTemple} className="space-y-4 overflow-y-auto pr-2 custom-scrollbar">

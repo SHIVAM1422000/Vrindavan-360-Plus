@@ -936,7 +936,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-trust-gold/30 shadow-lg shadow-trust-navy/10 bg-white group relative shrink-0">
               <img 
-                src="logo.png" 
+                src="/logo.png" 
                 alt="Vrindavan 360 Plus Logo" 
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 referrerPolicy="no-referrer"
@@ -1370,7 +1370,7 @@ export default function App() {
                   <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white flex items-center justify-center shadow-xl shadow-trust-navy/5 shrink-0 border-4 border-trust-gold/20 transition-all duration-500 group-hover:shadow-trust-gold/40 overflow-hidden relative p-1">
                     <div className="absolute inset-0 bg-gradient-to-tr from-trust-gold/10 to-transparent pointer-events-none z-10" />
                     <img 
-                      src="logo.png" 
+                      src="/logo.png" 
                       alt="Ras Naagri Sharan - Vrindavan 360 Plus Founder and Spiritual Guide" 
                       className="w-full h-full object-contain opacity-100 transition-transform duration-700 group-hover:scale-110"
                       referrerPolicy="no-referrer"

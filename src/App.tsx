@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Users,
   CheckCircle2,
+  AlertCircle,
   ArrowRight,
   Star,
   Trash2,
@@ -374,6 +375,14 @@ export default function App() {
   const [whatsappForm, setWhatsappForm] = useState({ name: '', phone: '', enquiry: '' });
   const [hasClickedWhatsapp, setHasClickedWhatsapp] = useState(false);
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  const [showFAQ, setShowFAQ] = useState(false);
+  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ type: 'temple' | 'event', id: number } | null>(null);
+
+  const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   const t = (key: keyof typeof translations.en) => (translations[language] as any)[key];
 
@@ -442,7 +451,7 @@ export default function App() {
       setIsAdminMode(false);
     } catch (error) {
       console.error('Login failed:', error);
-      alert('Login failed. Please try again.');
+      showNotification('Login failed. Please try again.', 'error');
     }
   };
 
@@ -467,29 +476,29 @@ export default function App() {
       if (isNew) {
         await setDoc(templeRef, { ...editingTemple, last_verified: `Added on ${format(new Date(), 'd MMMM, yyyy')}` });
         logAnalyticsEvent('temple_create', { temple_id: editingTemple.id, temple_name: editingTemple.name });
-        alert('Temple Added Successfully');
+        showNotification('Temple Added Successfully');
       } else {
         await updateDoc(templeRef, { ...editingTemple, last_verified: `Updated on ${format(new Date(), 'd MMMM, yyyy')}` });
         logAnalyticsEvent('temple_update', { temple_id: editingTemple.id, temple_name: editingTemple.name });
-        alert('Temple Updated Successfully');
+        showNotification('Temple Updated Successfully');
       }
       setEditingTemple(null);
     } catch (error) {
       handleFirestoreError(error, isNew ? OperationType.CREATE : OperationType.UPDATE, path);
+      showNotification('Failed to save temple', 'error');
     }
   };
 
   const handleDeleteTemple = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this temple? This action cannot be undone.')) return;
-    
     const path = `temples/${id}`;
     try {
       await deleteDoc(doc(db, 'temples', id.toString()));
       logAnalyticsEvent('temple_delete', { temple_id: id });
       setEditingTemple(null);
-      alert('Temple Deleted Successfully');
+      showNotification('Temple Deleted Successfully');
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, path);
+      showNotification('Failed to delete temple', 'error');
     }
   };
 
@@ -505,29 +514,29 @@ export default function App() {
       if (isNew) {
         await setDoc(eventRef, { ...editingEvent });
         logAnalyticsEvent('event_create', { event_id: editingEvent.id, event_name: editingEvent.event });
-        alert('Event Added Successfully');
+        showNotification('Event Added Successfully');
       } else {
         await updateDoc(eventRef, { ...editingEvent });
         logAnalyticsEvent('event_update', { event_id: editingEvent.id, event_name: editingEvent.event });
-        alert('Event Updated Successfully');
+        showNotification('Event Updated Successfully');
       }
       setEditingEvent(null);
     } catch (error) {
       handleFirestoreError(error, isNew ? OperationType.CREATE : OperationType.UPDATE, path);
+      showNotification('Failed to save event', 'error');
     }
   };
 
   const handleDeleteEvent = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this event? This action cannot be undone.')) return;
-
     const path = `events/${id}`;
     try {
       await deleteDoc(doc(db, 'events', id.toString()));
       logAnalyticsEvent('event_delete', { event_id: id });
       setEditingEvent(null);
-      alert('Event Deleted Successfully');
+      showNotification('Event Deleted Successfully');
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, path);
+      showNotification('Failed to delete event', 'error');
     }
   };
 
@@ -535,13 +544,13 @@ export default function App() {
     e.preventDefault();
     if (!newAdminEmail || !isUserAdmin(user?.email)) return;
     if (user?.email !== SUPER_ADMIN) {
-      alert('Only the super admin can add new admins.');
+      showNotification('Only the super admin can add new admins.', 'error');
       return;
     }
     try {
       await setDoc(doc(db, 'admins', newAdminEmail), { email: newAdminEmail });
       setNewAdminEmail('');
-      alert('Admin added successfully');
+      showNotification('Admin added successfully');
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'admins');
     }
@@ -549,15 +558,15 @@ export default function App() {
 
   const handleRemoveAdmin = async (email: string) => {
     if (user?.email !== SUPER_ADMIN) {
-      alert('Only the super admin can remove admins.');
+      showNotification('Only the super admin can remove admins.', 'error');
       return;
     }
-    if (!window.confirm(`Are you sure you want to remove ${email} as admin?`)) return;
     try {
       await deleteDoc(doc(db, 'admins', email));
-      alert('Admin removed successfully');
+      showNotification('Admin removed successfully');
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, 'admins');
+      showNotification('Failed to remove admin', 'error');
     }
   };
 
@@ -612,10 +621,10 @@ export default function App() {
       const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
       audio.play().catch(() => {}); // Ignore if browser blocks audio
       
-      alert('Data Migrated Successfully!');
+      showNotification('Data Migrated Successfully!');
     } catch (error) {
       console.error('Migration failed:', error);
-      alert('Migration failed. Check console for details.');
+      showNotification('Migration failed. Check console for details.', 'error');
     } finally {
       setIsMigrating(false);
     }
@@ -700,7 +709,7 @@ export default function App() {
       if (templeList.length > 0) {
         setTemples(templeList);
         setLoading(false);
-      } else {
+      } else if (!isAuthReady) {
         fetch('/api/temples')
           .then(res => res.json())
           .then(data => {
@@ -711,6 +720,9 @@ export default function App() {
             console.error('Fetch temples failed:', err);
             setLoading(false);
           });
+      } else {
+        setTemples([]);
+        setLoading(false);
       }
     }, (error) => {
       console.error('Temples onSnapshot error:', error);
@@ -725,9 +737,8 @@ export default function App() {
     const eventsQuery = query(collection(db, 'events'), orderBy('id', 'asc'));
     const unsubscribeEvents = onSnapshot(eventsQuery, (snapshot) => {
       const eventList = snapshot.docs.map(doc => doc.data() as SpecialEvent);
-      if (eventList.length > 0) {
-        setEvents(eventList);
-      } else {
+      setEvents(eventList);
+      if (eventList.length === 0 && !isAuthReady) {
         fetch('/api/events')
           .then(res => res.json())
           .then(data => setEvents(data))
@@ -928,8 +939,29 @@ export default function App() {
     return event.event;
   };
 
+  // Dynamic Structured Data for AI Crawlers
+  const structuredData = useMemo(() => {
+    return {
+      "@context": "https://schema.org",
+      "@type": "Dataset",
+      "name": "Vrindavan Real-Time Temple Status",
+      "description": "Live status and timings for major temples in Vrindavan.",
+      "url": "https://vrindavan360.site/",
+      "hasPart": temples.map(t => ({
+        "@type": "TouristAttraction",
+        "name": t.name,
+        "description": t.specialty,
+        "openingHours": `${t.timings[season].morning.open}-${t.timings[season].morning.close}, ${t.timings[season].evening.open}-${t.timings[season].evening.close}`
+      }))
+    };
+  }, [temples, season]);
+
   return (
     <div className="min-h-screen bg-trust-bg selection:bg-trust-gold/20 font-sans text-trust-navy">
+      {/* Dynamic JSON-LD */}
+      <script type="application/ld+json">
+        {JSON.stringify(structuredData)}
+      </script>
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-trust-gold/10 px-6 py-2 md:py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -1628,7 +1660,17 @@ export default function App() {
                           </div>
                           <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
                             <ShieldCheck className="w-4 h-4 text-trust-mint" />
-                            <span>{t('verified')}: {temple.last_verified}</span>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {!temple.name.includes("Premanand Ji Maharaj") && (
+                                <span>{t('verified')}: {temple.last_verified}</span>
+                              )}
+                              {temple.name.includes("Premanand Ji Maharaj") && (
+                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md font-black text-[9px] border border-emerald-100 flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  Verified by "Radha Keli Kunj" on {temple.last_verified.replace('Updated on ', '')}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
 
@@ -1926,6 +1968,95 @@ export default function App() {
           </div>
         </section>
 
+        {/* AI-SEO Optimized FAQ Section */}
+        <section className="mb-32 px-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex flex-col md:flex-row gap-12 items-start">
+              <div className="md:w-1/3 sticky top-24">
+                <h2 className="text-3xl font-serif italic font-black text-trust-navy leading-tight">
+                  Frequently Asked <span className="text-trust-gold">Questions</span>
+                </h2>
+                <p className="text-sm text-slate-500 mt-4 font-medium leading-relaxed">
+                  Quick answers to the most common queries about Vrindavan darshan, token processes, and travel tips.
+                </p>
+                <div className="mt-8 p-6 bg-trust-gold/5 rounded-2xl border border-trust-gold/10">
+                  <p className="text-[10px] font-black text-trust-gold uppercase tracking-widest mb-2">Pro Tip</p>
+                  <p className="text-xs text-trust-navy/70 leading-relaxed italic">"Always check the 'Live Status' before heading out, as temple schedules can change during festivals."</p>
+                </div>
+              </div>
+              <div className="md:w-2/3 space-y-4">
+                {[
+                  {
+                    q: "What are the Vrindavan temple timings today?",
+                    a: "Temple timings vary by season. Banke Bihari opens at 7:45 AM in summer and 8:45 AM in winter. Most temples close between 12:00 PM and 4:00 PM."
+                  },
+                  {
+                    q: "How to get Premanand Ji Maharaj Ekantik Vartalap token?",
+                    a: "Tokens are distributed at the Sunrakh Road ashram (Soveri Kund) starting around 2:00 AM. It is a first-come, first-served process."
+                  },
+                  {
+                    q: "What is the best time for Banke Bihari Darshan?",
+                    a: "Morning Shringar Aarti (9:00 AM) or evening Sandhya Aarti are best. Reach 45 minutes early to manage the crowd."
+                  },
+                  {
+                    q: "Is there a real-time guide for Vrindavan 2026?",
+                    a: "Vrindavan 360 Plus provides live updates on crowd levels, temple status, and special events for all devotees."
+                  }
+                ].map((faq, idx) => (
+                  <div key={idx} className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                    <h3 className="text-base font-bold text-trust-navy mb-2">{faq.q}</h3>
+                    <p className="text-sm text-slate-600 leading-relaxed font-medium">{faq.a}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Information Dense Summary for AI Crawlers */}
+        <section className="mb-32 px-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-white rounded-[2.5rem] p-10 border border-slate-200 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-trust-gold/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+              <div className="relative z-10">
+                <h2 className="text-[10px] font-black text-trust-gold uppercase tracking-[0.2em] mb-6">Quick Summary Guide</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                  <div>
+                    <h3 className="text-sm font-bold text-trust-navy mb-4 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-trust-gold" /> Temple Status
+                    </h3>
+                    <ul className="text-xs text-slate-500 space-y-3 font-medium">
+                      <li>• Banke Bihari: {getTempleStatus(temples.find(t => t.name.includes('Banke')) || temples[0]).nextEvent}</li>
+                      <li>• Prem Mandir: {getTempleStatus(temples.find(t => t.name.includes('Prem')) || temples[1]).nextEvent}</li>
+                      <li>• ISKCON: {getTempleStatus(temples.find(t => t.name.includes('ISKCON')) || temples[2]).nextEvent}</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-trust-navy mb-4 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-trust-gold" /> Special Events
+                    </h3>
+                    <ul className="text-xs text-slate-500 space-y-3 font-medium">
+                      {events.slice(0, 3).map(e => (
+                        <li key={e.id}>• {e.event}: {e.location} ({e.time || 'Check Schedule'})</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-trust-navy mb-4 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-trust-gold" /> Travel Tips
+                    </h3>
+                    <ul className="text-xs text-slate-500 space-y-3 font-medium">
+                      <li>• Best Time: 5 AM - 9 AM</li>
+                      <li>• Safety: Keep phones safe from monkeys</li>
+                      <li>• Transport: E-rickshaws are best for narrow lanes</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </main>
 
       <footer className="bg-white border-t border-slate-100 py-20 px-6">
@@ -2074,7 +2205,6 @@ export default function App() {
                           </button>
                           <button 
                             onClick={async () => {
-                              if (!confirm('This will update all events with default values for missing fields. Continue?')) return;
                               for (const e of events) {
                                 const eventRef = doc(db, 'events', e.id.toString());
                                 await updateDoc(eventRef, {
@@ -2083,7 +2213,7 @@ export default function App() {
                                   time: e.time ?? '18:00'
                                 });
                               }
-                              alert('Event data updated!');
+                              showNotification('Event data updated!');
                             }}
                             className="px-4 py-3 rounded-xl bg-slate-100 text-trust-navy text-sm font-bold border border-slate-200"
                           >
@@ -2588,6 +2718,23 @@ export default function App() {
                 </div>
               </form>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Notifications */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 ${
+              notification.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
+            }`}
+          >
+            {notification.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+            <span className="text-sm font-bold">{notification.message}</span>
           </motion.div>
         )}
       </AnimatePresence>

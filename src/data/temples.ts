@@ -51,30 +51,6 @@ export const initialTemples: Temple[] = [
     ]
   },
   {
-    id: 3,
-    name: "Param Pujya Premanand Ji Maharaj",
-    specialty: "Divine Satsang & Ekantik Vartalap",
-    pro_tip: "Maharaj ji usually gives darshan during his night walk (Pad-Yatra) around 2:00 AM.",
-    visitor_count: 15000,
-    last_verified: "Verified from Maharaj ji's SEVAK on 2 April, 2026",
-    maps_url: "https://maps.app.goo.gl/p7H8989Qf77777",
-    image: "https://picsum.photos/seed/premanand/800/600",
-    timings: {
-      summer: {
-        morning: { open: "02:00 AM", close: "04:00 AM" },
-        evening: { open: "05:00 PM", close: "07:00 PM" }
-      },
-      winter: {
-        morning: { open: "02:00 AM", close: "04:00 AM" },
-        evening: { open: "05:00 PM", close: "07:00 PM" }
-      }
-    },
-    aarti: [
-      { name: "Night Pad-Yatra", time: "02:15 AM" },
-      { name: "Satsang", time: "05:30 PM" }
-    ]
-  },
-  {
     id: 4,
     name: "Radha Raman Temple",
     specialty: "Self-Manifested Deity (No human touch)",

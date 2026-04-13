@@ -65,30 +65,6 @@ async function startServer() {
       ]
     },
     {
-      id: 3,
-      name: "Param Pujya Premanand Ji Maharaj",
-      specialty: "Divine Satsang & Ekantik Vartalap",
-      pro_tip: "Maharaj ji usually gives darshan during his night walk (Pad-Yatra) around 2:00 AM.",
-      visitor_count: 15000,
-      last_verified: "Verified on 9 April, 2026",
-      maps_url: "https://maps.app.goo.gl/p7H8989Qf77777",
-      image: "https://picsum.photos/seed/premanand/800/600",
-      timings: {
-        summer: {
-          morning: { open: "02:00 AM", close: "04:00 AM" },
-          evening: { open: "05:00 PM", close: "07:00 PM" }
-        },
-        winter: {
-          morning: { open: "02:00 AM", close: "04:00 AM" },
-          evening: { open: "05:00 PM", close: "07:00 PM" }
-        }
-      },
-      aarti: [
-        { name: "Night Pad-Yatra", time: "02:15 AM" },
-        { name: "Satsang", time: "05:30 PM" }
-      ]
-    },
-    {
       id: 4,
       name: "Radha Raman Temple",
       specialty: "Self-Manifested Deity (No human touch)",
@@ -133,6 +109,76 @@ async function startServer() {
       },
       aarti: [
         { name: "Shringar Aarti", time: "08:00 AM" }
+      ]
+    },
+    {
+      id: 6,
+      name: "Radha Rani Temple (Barsana)",
+      specialty: "Birthplace of Shri Radha Rani",
+      pro_tip: "Climb 250 steps or use the ropeway. Visit during Radhashtami for a grand experience.",
+      visitor_count: 25000,
+      last_verified: "Verified on 12 April, 2026",
+      maps_url: "https://goo.gl/maps/barsana",
+      image: "https://picsum.photos/seed/barsana/800/600",
+      timings: {
+        summer: {
+          morning: { open: "05:00 AM", close: "02:00 PM" },
+          evening: { open: "05:00 PM", close: "09:00 PM" }
+        },
+        winter: {
+          morning: { open: "05:30 AM", close: "02:00 PM" },
+          evening: { open: "04:30 PM", close: "08:30 PM" }
+        }
+      },
+      aarti: [
+        { name: "Mangala Aarti", time: "05:00 AM" },
+        { name: "Sandhya Aarti", time: "07:00 PM" }
+      ]
+    },
+    {
+      id: 7,
+      name: "Nandgaon Temple",
+      specialty: "Home of Lord Krishna's childhood",
+      pro_tip: "Located on Nandishwar Hill. The view from the top is breathtaking.",
+      visitor_count: 18000,
+      last_verified: "Verified on 12 April, 2026",
+      maps_url: "https://goo.gl/maps/nandgaon",
+      image: "https://picsum.photos/seed/nandgaon/800/600",
+      timings: {
+        summer: {
+          morning: { open: "05:00 AM", close: "02:00 PM" },
+          evening: { open: "04:00 PM", close: "09:00 PM" }
+        },
+        winter: {
+          morning: { open: "06:00 AM", close: "02:00 PM" },
+          evening: { open: "04:00 PM", close: "08:30 PM" }
+        }
+      },
+      aarti: [
+        { name: "Mangala Aarti", time: "06:00 AM" }
+      ]
+    },
+    {
+      id: 8,
+      name: "Gokul Raman Reti",
+      specialty: "Sacred Sand where Krishna played",
+      pro_tip: "Roll in the sacred sand (Raman Reti) for spiritual blessings. Visit the nearby deer park.",
+      visitor_count: 15000,
+      last_verified: "Verified on 12 April, 2026",
+      maps_url: "https://goo.gl/maps/gokul",
+      image: "https://picsum.photos/seed/gokul/800/600",
+      timings: {
+        summer: {
+          morning: { open: "05:00 AM", close: "12:00 PM" },
+          evening: { open: "04:00 PM", close: "09:00 PM" }
+        },
+        winter: {
+          morning: { open: "06:00 AM", close: "12:00 PM" },
+          evening: { open: "04:00 PM", close: "08:30 PM" }
+        }
+      },
+      aarti: [
+        { name: "Sandhya Aarti", time: "07:00 PM" }
       ]
     }
   ];

@@ -170,7 +170,7 @@ const testimonials = [
 const translations = {
   en: {
     nav_temples: "Temples",
-    hero_title_1: "Pujya Premanand Ji",
+    hero_title_1: "",
     hero_title_2: "Sahi Jankari, Behetar Anubhav",
     hero_badge: "Maharaji's Disciple Verified",
     intro_verified: "Verified Digital Guide",
@@ -245,14 +245,14 @@ const translations = {
     premanand_satsang_q: "How to attend Ekantik Vartalap/Satsang?",
     premanand_satsang_req_title: "Two Prior Requirements:",
     premanand_satsang_req_1: "First, it's a '3 day process' and Second, you must have a 'SPIRITUAL QUESTION'.",
-    premanand_satsang_req_2: "If you fulfill above condition then reach the Ashram's 'ENQUIRY COUNTER' to fill the 'FORM' b/w 10 AM to 3:30 PM everyday.",
+    premanand_satsang_req_2: "If you fulfill above condition then reach the Radha Keli Kunj Ashram's 'ENQUIRY COUNTER' to fill the 'FORM' b/w 10 AM to 3:30 PM everyday.",
     premanand_satsang_tips: "The forms are made available to almost everyone so don't panic there is no 'QUOTA' for that. The selection will be done for 90 men and 90 women.",
     premanand_note_fraud: "BEWARE of FRAUDS, THE TOKEN and FORMS are completely 'FREE'.",
     premanand_enquiry: "ASHRAM (24*7) Enquiry number : 7777048484",
   },
   hi: {
     nav_temples: "मंदिर",
-    hero_title_1: "पूज्य प्रेमानंद जी",
+    hero_title_1: "",
     hero_title_2: "सही जानकारी, बेहतर अनुभव",
     hero_badge: "महाराज जी के शिष्य द्वारा सत्यापित",
     intro_verified: "सत्यापित डिजिटल गाइड",
@@ -327,7 +327,7 @@ const translations = {
     premanand_satsang_q: "एकांतिक वार्तालाप/सत्संग में कैसे शामिल हों?",
     premanand_satsang_req_title: "दो पूर्व आवश्यकताएं:",
     premanand_satsang_req_1: "पहला, यह '3 दिन की प्रक्रिया' है और दूसरा, आपके पास एक 'आध्यात्मिक प्रश्न' होना चाहिए।",
-    premanand_satsang_req_2: "यदि आप उपरोक्त शर्त पूरी करते हैं तो हर दिन सुबह 10 बजे से दोपहर 3:30 बजे के बीच 'फॉर्म' भरने के लिए आश्रम के 'पूछताछ काउंटर' पर पहुँचें।",
+    premanand_satsang_req_2: "यदि आप उपरोक्त शर्त पूरी करते हैं तो हर दिन सुबह 10 बजे से दोपहर 3:30 बजे के बीच 'फॉर्म' भरने के लिए राधा केलि कुंज आश्रम के 'पूछताछ काउंटर' पर पहुँचें।",
     premanand_satsang_tips: "फॉर्म लगभग सभी के लिए उपलब्ध कराए जाते हैं इसलिए घबराएं नहीं, इसके लिए कोई 'कोटा' नहीं है। चयन 90 पुरुषों और 90 महिलाओं के लिए किया जाएगा।",
     premanand_note_fraud: "धोखाधड़ी से सावधान रहें, टोकन और फॉर्म पूरी तरह से 'मुफ्त' हैं।",
     premanand_enquiry: "आश्रम (24*7) पूछताछ नंबर : 7777048484",
@@ -2090,7 +2090,7 @@ export default function App() {
                   },
                   {
                     q: "How to get Premanand Ji Maharaj Ekantik Vartalap token?",
-                    a: "Tokens are distributed at the Sunrakh Road ashram (Soveri Kund) starting around 2:00 AM. It is a first-come, first-served process."
+                    a: "Reach the Radha Keli Kunj Ashram's 'ENQUIRY COUNTER' to fill the 'FORM' b/w 10 AM to 3:30 PM everyday. TIPS: The forms are made available to almost everyone so don't panic there is no 'QUOTA' for that. The selection will be done for 90 men and 90 women."
                   },
                   {
                     q: "What is the best time for Banke Bihari Darshan?",

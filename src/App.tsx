@@ -20,7 +20,8 @@ import {
   Star,
   Trash2,
   Quote,
-  Compass
+  Compass,
+  Phone
 } from 'lucide-react';
 import { format, isWithinInterval, parse, set, differenceInMinutes, subHours, addMinutes, subMinutes, isValid } from 'date-fns';
 import { clsx, type ClassValue } from 'clsx';
@@ -166,31 +167,12 @@ const testimonials = [
   }
 ];
 
-const processSteps = [
-  {
-    title: "Real-Time Verification",
-    description: "We verify temple timings daily with local priests and authorities.",
-    icon: <Clock className="w-6 h-6" />
-  },
-  {
-    title: "Expert Curation",
-    description: "Every tip and insight is curated by spiritual experts and historians.",
-    icon: <ShieldCheck className="w-6 h-6" />
-  },
-  {
-    title: "Seamless Navigation",
-    description: "One-click maps and local guidance to ensure you never lose your way.",
-    icon: <Navigation className="w-6 h-6" />
-  }
-];
-
 const translations = {
   en: {
     nav_temples: "Temples",
-    nav_process: "Process",
-    hero_title_1: "Sahi jankari aur",
-    hero_title_2: "behetar anubhav",
-    hero_badge: "Sacred Heritage Guide",
+    hero_title_1: "Pujya Premanand Ji",
+    hero_title_2: "Sahi Jankari, Behetar Anubhav",
+    hero_badge: "Maharaji's Disciple Verified",
     intro_verified: "Verified Digital Guide",
     intro_dhamvaasi: "Dham-Vaasi",
     intro_radhe: "Radhe Radhe!",
@@ -254,13 +236,25 @@ const translations = {
     secure: "SECURE",
     special_events_title: "Special Events & Festivals",
     special_events_desc: "Don't miss these sacred celebrations in Shri Dham Vrindavan.",
+    premanand_title: "Pujya Premanand Ji Updates",
+    premanand_subtitle: "Direct from Maharaji's Disciple • 2026 Guidance",
+    premanand_darshan_q: "When is Darshan?",
+    premanand_darshan_a: "6 AM at Soveri Kund every day.",
+    premanand_darshan_tips: "Reach as early as 5 AM to get the front seat.",
+    premanand_map: "Map",
+    premanand_satsang_q: "How to attend Ekantik Vartalap/Satsang?",
+    premanand_satsang_req_title: "Two Prior Requirements:",
+    premanand_satsang_req_1: "First, it's a '3 day process' and Second, you must have a 'SPIRITUAL QUESTION'.",
+    premanand_satsang_req_2: "If you fulfill above condition then reach the Ashram's 'ENQUIRY COUNTER' to fill the 'FORM' b/w 10 AM to 3:30 PM everyday.",
+    premanand_satsang_tips: "The forms are made available to almost everyone so don't panic there is no 'QUOTA' for that. The selection will be done for 90 men and 90 women.",
+    premanand_note_fraud: "BEWARE of FRAUDS, THE TOKEN and FORMS are completely 'FREE'.",
+    premanand_enquiry: "ASHRAM (24*7) Enquiry number : 7777048484",
   },
   hi: {
     nav_temples: "मंदिर",
-    nav_process: "प्रक्रिया",
-    hero_title_1: "सही जानकारी और",
-    hero_title_2: "बेहतर अनुभव",
-    hero_badge: "पवित्र विरासत गाइड",
+    hero_title_1: "पूज्य प्रेमानंद जी",
+    hero_title_2: "सही जानकारी, बेहतर अनुभव",
+    hero_badge: "महाराज जी के शिष्य द्वारा सत्यापित",
     intro_verified: "सत्यापित डिजिटल गाइड",
     intro_dhamvaasi: "धाम-वासी",
     intro_radhe: "राधे राधे! 🙏",
@@ -324,6 +318,19 @@ const translations = {
     secure: "सुरक्षित",
     special_events_title: "विशेष कार्यक्रम और उत्सव",
     special_events_desc: "श्री धाम वृन्दावन के इन पवित्र उत्सवों को न चूकें।",
+    premanand_title: "पूज्य प्रेमानंद जी अपडेट्स",
+    premanand_subtitle: "महाराज जी के शिष्य द्वारा सीधे • 2026 मार्गदर्शन",
+    premanand_darshan_q: "दर्शन कब होते हैं?",
+    premanand_darshan_a: "हर दिन सुबह 6 बजे सोवेरी कुंड पर।",
+    premanand_darshan_tips: "सामने की सीट पाने के लिए सुबह 5 बजे तक पहुँचें।",
+    premanand_map: "नक्शा",
+    premanand_satsang_q: "एकांतिक वार्तालाप/सत्संग में कैसे शामिल हों?",
+    premanand_satsang_req_title: "दो पूर्व आवश्यकताएं:",
+    premanand_satsang_req_1: "पहला, यह '3 दिन की प्रक्रिया' है और दूसरा, आपके पास एक 'आध्यात्मिक प्रश्न' होना चाहिए।",
+    premanand_satsang_req_2: "यदि आप उपरोक्त शर्त पूरी करते हैं तो हर दिन सुबह 10 बजे से दोपहर 3:30 बजे के बीच 'फॉर्म' भरने के लिए आश्रम के 'पूछताछ काउंटर' पर पहुँचें।",
+    premanand_satsang_tips: "फॉर्म लगभग सभी के लिए उपलब्ध कराए जाते हैं इसलिए घबराएं नहीं, इसके लिए कोई 'कोटा' नहीं है। चयन 90 पुरुषों और 90 महिलाओं के लिए किया जाएगा।",
+    premanand_note_fraud: "धोखाधड़ी से सावधान रहें, टोकन और फॉर्म पूरी तरह से 'मुफ्त' हैं।",
+    premanand_enquiry: "आश्रम (24*7) पूछताछ नंबर : 7777048484",
   }
 };
 
@@ -376,6 +383,21 @@ export default function App() {
   const [hasClickedWhatsapp, setHasClickedWhatsapp] = useState(false);
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
   const [showFAQ, setShowFAQ] = useState(false);
+  const [visitedTemples, setVisitedTemples] = useState<number[]>(() => {
+    const saved = localStorage.getItem('visitedTemples');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('visitedTemples', JSON.stringify(visitedTemples));
+  }, [visitedTemples]);
+
+  const toggleVisited = (id: number) => {
+    setVisitedTemples(prev => 
+      prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]
+    );
+    logAnalyticsEvent('checklist_toggle', { temple_id: id });
+  };
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'temple' | 'event', id: number } | null>(null);
 
@@ -962,6 +984,30 @@ export default function App() {
       <script type="application/ld+json">
         {JSON.stringify(structuredData)}
       </script>
+
+      {/* Live Ticker */}
+      <div className="bg-trust-navy py-2 overflow-hidden border-b border-white/5">
+        <div className="flex whitespace-nowrap animate-marquee">
+          {[1, 2, 3].map((_, i) => (
+            <div key={i} className="flex items-center gap-8 px-4">
+              <span className="text-[10px] font-black text-trust-gold uppercase tracking-widest flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Live from Vrindavan
+              </span>
+              <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
+                Premanand Ji Darshan Token: Distribution Started at 10:00 AM
+              </span>
+              <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
+                Banke Bihari: Crowd Level Normal
+              </span>
+              <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
+                Radha Vallabh: Aarti in 45 mins
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-trust-gold/10 px-6 py-2 md:py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -994,6 +1040,16 @@ export default function App() {
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              aria-label={language === 'en' ? "Switch to Hindi" : "Switch to English"}
+              animate={{ 
+                backgroundColor: language === 'hi' ? ["#001F3F", "#D4AF37", "#001F3F"] : "#001F3F",
+                scale: language === 'hi' ? [1, 1.05, 1] : 1
+              }}
+              transition={{ 
+                duration: 2, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
               onClick={() => {
                 const newLang = language === 'en' ? 'hi' : 'en';
                 setLanguage(newLang);
@@ -1010,80 +1066,16 @@ export default function App() {
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{season} Schedule Active</span>
               </div>
               <a href="#temples" className="text-xs font-bold uppercase tracking-widest text-trust-navy hover:text-trust-gold transition-colors">Temples</a>
-              <a href="#how-we-help" className="text-xs font-bold uppercase tracking-widest text-trust-navy hover:text-trust-gold transition-colors">Process</a>
-              <button 
-                onClick={() => setShowAlerts(!showAlerts)}
-                className={cn(
-                  "relative p-2 rounded-full transition-all",
-                  (activeAlerts.length > 0 || isTokenTime) 
-                    ? "bg-trust-gold/10 text-trust-gold hover:bg-trust-gold/20" 
-                    : "text-trust-navy hover:bg-slate-50"
-                )}
-              >
-                <Bell className={cn("w-5 h-5", (activeAlerts.length > 0 || isTokenTime) && "animate-bounce")} />
-                {(activeAlerts.length > 0 || isTokenTime) && (
-                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-600 rounded-full border-2 border-white shadow-sm"></span>
-                )}
-              </button>
+              <a href="#founder-intro" className="text-xs font-bold uppercase tracking-widest text-trust-navy hover:text-trust-gold transition-colors">About</a>
             </div>
 
             {/* Mobile Menu Button */}
-            <button 
-              className="md:hidden p-2 text-trust-navy hover:bg-slate-50 rounded-full"
-              onClick={() => setShowAlerts(!showAlerts)}
-            >
-              <Bell className="w-5 h-5" />
-              {(activeAlerts.length > 0 || isTokenTime) && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-trust-gold rounded-full border-2 border-white"></span>
-              )}
-            </button>
+            <div className="md:hidden">
+              {/* Spacer or other mobile nav items */}
+            </div>
           </div>
         </div>
       </nav>
-
-      {/* Floating Live Updates Button (Right, above WhatsApp) */}
-      <motion.button
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ 
-          scale: 1, 
-          opacity: 1,
-          boxShadow: activeAlerts.length > 0 ? [
-            "0 0 0px rgba(212, 175, 55, 0)", 
-            "0 0 20px rgba(212, 175, 55, 0.4)", 
-            "0 0 0px rgba(212, 175, 55, 0)"
-          ] : "0 10px 25px -5px rgba(0,0,0,0.1)"
-        }}
-        transition={{ 
-          boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-        }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => {
-          setShowAlerts(!showAlerts);
-          logAnalyticsEvent('live_updates_click');
-        }}
-        className={cn(
-          "fixed bottom-24 right-4 md:bottom-24 md:right-6 z-[60] w-12 h-12 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center transition-all border-4 border-white",
-          showAlerts ? "bg-trust-gold text-trust-navy" : (activeAlerts.length > 0 ? "bg-trust-gold text-trust-navy" : "bg-trust-navy text-white")
-        )}
-      >
-        <Bell className={cn("w-5 h-5 md:w-6 md:h-6", (activeAlerts.length > 0 || isTokenTime) && "animate-bounce")} />
-        {(activeAlerts.length > 0 || isTokenTime) && (
-          <motion.div 
-            animate={{ opacity: [1, 0.5, 1] }}
-            transition={{ duration: 1, repeat: Infinity }}
-            className="absolute -top-2 -right-2 bg-rose-600 text-white text-[7px] md:text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-lg border border-white/20"
-          >
-            <span className="w-1 h-1 bg-white rounded-full animate-ping" />
-            LIVE
-          </motion.div>
-        )}
-        {(activeAlerts.length > 0 || isTokenTime) && (
-          <span className="absolute -bottom-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-trust-gold rounded-full border-2 border-white text-[8px] md:text-[9px] font-black flex items-center justify-center text-trust-navy shadow-sm">
-            {activeAlerts.length + (isTokenTime ? 1 : 0)}
-          </span>
-        )}
-      </motion.button>
 
       {/* Floating WhatsApp Button (Right) */}
       <motion.button
@@ -1365,7 +1357,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Hero Section */}
-      <header className="relative pt-20 md:pt-32 pb-12 md:pb-20 px-6 overflow-hidden">
+      <header className="relative pt-4 md:pt-16 pb-4 md:pb-12 px-6 overflow-hidden flex flex-col justify-center">
         <div className="absolute inset-0 z-0">
             <img 
               src="https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&q=80&w=2000" 
@@ -1378,154 +1370,138 @@ export default function App() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#FDFCF9]/0 via-[#FDFCF9]/80 to-[#FDFCF9]" />
         </div>
 
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-trust-gold/10 border border-trust-gold/20 mb-8">
-              <Star className="w-3 h-3 text-trust-gold fill-trust-gold" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-trust-navy">{t('hero_badge')}</span>
-            </div>
-            <h1 className="text-5xl md:text-7xl font-serif italic font-bold text-trust-navy mb-8 leading-[1.1] tracking-tight">
-              {t('hero_title_1')} <span className="text-trust-gold">{t('hero_title_2')}</span>
-            </h1>
-            
-            <div className="max-w-4xl mx-auto bg-white p-8 md:p-16 rounded-[3rem] border border-trust-gold/10 shadow-[0_32px_64px_-12px_rgba(0,65,106,0.08)] mb-16 text-left relative overflow-hidden group">
-              {/* Decorative elements */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-trust-gold/5 rounded-full -mr-32 -mt-32 blur-3xl transition-transform group-hover:scale-110" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-trust-navy/5 rounded-full -ml-24 -mb-24 blur-2xl" />
-              
-              <div className="relative z-10">
-                <div className="flex flex-col md:flex-row md:items-center gap-8 mb-12 border-b border-slate-100 pb-10">
-                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white flex items-center justify-center shadow-xl shadow-trust-navy/5 shrink-0 border-4 border-trust-gold/20 transition-all duration-500 group-hover:shadow-trust-gold/40 overflow-hidden relative p-1">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-trust-gold/10 to-transparent pointer-events-none z-10" />
-                    <img 
-                      src="/logo.png" 
-                      alt="Ras Naagri Sharan - Vrindavan 360 Plus Founder and Spiritual Guide" 
-                      className="w-full h-full object-contain opacity-100 transition-transform duration-700 group-hover:scale-110"
-                      referrerPolicy="no-referrer"
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544061101-494203977b97?auto=format&fit=crop&q=80&w=400';
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-widest rounded-full border border-emerald-100 flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3 h-3" /> {t('intro_verified')}
-                      </span>
-                      <span className="px-3 py-1 bg-trust-gold/10 text-trust-gold text-[9px] font-black uppercase tracking-widest rounded-full border border-trust-gold/20">
-                        {t('intro_dhamvaasi')}
-                      </span>
-                    </div>
-                    <h2 className="text-3xl md:text-4xl font-serif italic font-black text-trust-navy leading-tight">
-                      Shree Harivansh <span className="text-trust-gold">!!</span>
-                    </h2>
-                    <p className="text-lg text-slate-400 font-medium italic mt-1">{t('intro_radhe')}</p>
-                  </div>
-                </div>
-                
-                <div className="grid md:grid-cols-5 gap-12 items-start">
-                  <div className="md:col-span-3 space-y-8 text-slate-600 leading-relaxed">
-                    <div className="relative">
-                      <Quote className="absolute -top-6 -left-6 w-12 h-12 text-slate-100 -z-10 rotate-180" />
-                      <p className="text-lg md:text-xl font-medium text-slate-700">
-                        {t('intro_main').split(/(\*\*.*?\*\*|\[.*?\])/).map((part, i) => {
-                          if (part.startsWith('**') && part.endsWith('**')) {
-                            return <strong key={i} className="text-trust-navy font-black">{part.slice(2, -2)}</strong>;
-                          }
-                          if (part.startsWith('[') && part.endsWith(']')) {
-                            return (
-                              <span key={i} className="text-xl md:text-2xl font-black text-trust-gold italic uppercase tracking-tight mx-1">
-                                "{part.slice(1, -1)}"
-                              </span>
-                            );
-                          }
-                          return part;
-                        })}
-                      </p>
-                    </div>
-                    
-                    <p className="text-base md:text-lg leading-relaxed">
-                      {t('intro_goal')}
-                    </p>
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 lg:gap-12">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="w-full lg:w-[32%] text-left"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-trust-gold/10 border border-trust-gold/20 mb-3 md:mb-6">
+                <Star className="w-2.5 h-2.5 text-trust-gold fill-trust-gold" />
+                <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-trust-navy">{t('hero_badge')}</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-serif italic font-bold text-trust-navy mb-4 md:mb-8 leading-[1.1] tracking-tighter">
+                {t('hero_title_1')} <span className="text-trust-gold ml-2 md:ml-4">{t('hero_title_2')}</span>
+              </h1>
+              <p className="text-base md:text-lg text-slate-500 font-medium max-w-3xl leading-relaxed">
+                Real time Pujya Premanand Ji Darshan + TOKEN timing, Bankey Bihari Updates, Darshan Guidance 2026 by disciple of Premanand Ji .
+              </p>
+            </motion.div>
 
-                    <div className="pt-4 flex items-center gap-4">
-                      <div className="w-12 h-px bg-slate-200" />
-                      <p className="text-sm font-serif italic text-trust-navy font-bold opacity-60">{t('intro_tagline')}</p>
+            {/* Premanand Ji Quick Updates - Integrated into Hero for Desktop */}
+            <div className="w-full lg:w-[68%]">
+              <div className="bg-gradient-to-br from-trust-navy to-[#002a45] rounded-[2rem] md:rounded-[2.5rem] p-5 md:p-8 text-white shadow-2xl shadow-trust-navy/20 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-trust-gold/10 rounded-full -mr-32 -mt-32 blur-3xl" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-full bg-trust-gold/20 flex items-center justify-center border border-trust-gold/30 shrink-0">
+                      <Star className="w-5 h-5 text-trust-gold fill-trust-gold" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg md:text-2xl font-black tracking-tight leading-tight">{t('premanand_title')}</h2>
+                      <p className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-trust-gold font-bold">{t('premanand_subtitle')}</p>
+                      <a 
+                        href="tel:+917777048484"
+                        className="inline-flex items-center gap-2 mt-2 px-4 py-2 bg-trust-gold/10 rounded-xl border border-trust-gold/30 hover:bg-trust-gold/20 transition-all group"
+                      >
+                        <Phone className="w-4 h-4 text-trust-gold group-hover:scale-110 transition-transform" />
+                        <span className="text-xs md:text-base font-black text-trust-gold tracking-tight">
+                          {t('premanand_enquiry')}
+                        </span>
+                      </a>
                     </div>
                   </div>
 
-                  <div className="md:col-span-2 bg-slate-50/50 rounded-[2rem] p-6 border border-slate-100 space-y-6">
-                    <h4 className="text-[10px] font-black text-trust-navy uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-trust-gold" /> {t('services_title')}
-                    </h4>
-                    
-                    <div className="space-y-4">
-                      {[
-                        { title: t('service_1_title'), desc: t('service_1_desc') },
-                        { title: t('service_2_title'), desc: t('service_2_desc') },
-                        { title: t('service_3_title'), desc: t('service_3_desc') },
-                        { title: t('service_4_title'), desc: t('service_4_desc') }
-                      ].map((service, idx) => (
-                        <div key={idx} className="flex gap-3 items-start group/item">
-                          <div className="mt-1 bg-white text-emerald-600 p-1 rounded-lg shadow-sm border border-slate-100 group-hover/item:border-emerald-200 transition-colors">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-trust-navy mb-0.5">{service.title}</p>
-                            <p className="text-[10px] text-slate-500 leading-snug">{service.desc}</p>
-                          </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    {/* Darshan Card */}
+                    <div className="bg-white/10 backdrop-blur-md border border-white/10 p-5 md:p-6 rounded-2xl md:rounded-3xl group hover:bg-white/20 transition-all">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-trust-gold">{t('premanand_darshan_q')}</span>
+                        <Clock className="w-5 h-5 text-trust-gold" />
+                      </div>
+                      <p className="text-xl md:text-2xl font-black mb-3">{t('premanand_darshan_a')}</p>
+                      <div className="flex items-start gap-2 p-3 bg-white/5 rounded-xl border border-white/5">
+                        <div className="mt-1">
+                          <Star className="w-3 h-3 text-trust-gold fill-trust-gold" />
                         </div>
-                      ))}
+                        <p className="text-[11px] md:text-xs text-white/80 leading-relaxed font-medium">
+                          <span className="font-black text-trust-gold uppercase tracking-tighter mr-1">TIPS:</span>
+                          {t('premanand_darshan_tips')}
+                          <a 
+                            href="https://www.google.com/maps/place/Sobri+Kund/@27.5813133,77.6512839,15z/data=!4m7!3m6!1s0x39736f007d0818f1:0x39b22454bb39aa25!8m2!3d27.5813133!4d77.6703383!15sChxtYXAgb2Ygc292ZXJpIGt1bmQgdnJpbmRhdmFu4AEA!16s%2Fg%2F11n4pw61k3?entry=tts&g_ep=EgoyMDI2MDMzMC4wIPu8ASoASAFQAw%3D%3D&skid=bbdfe982-52f8-4ad8-9740-fa76451376eb" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="ml-2 inline-flex items-center gap-1 text-trust-gold font-black underline decoration-trust-gold/30 hover:decoration-trust-gold transition-all"
+                          >
+                            ({t('premanand_map')}) <ArrowRight className="w-3 h-3" />
+                          </a>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Satsang Card */}
+                    <div className="bg-white/10 backdrop-blur-md border border-white/10 p-5 md:p-6 rounded-2xl md:rounded-3xl group hover:bg-white/20 transition-all">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-trust-gold">{t('premanand_satsang_q')}</span>
+                        <ShieldCheck className="w-5 h-5 text-trust-gold" />
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mb-2">{t('premanand_satsang_req_title')}</p>
+                          <ul className="space-y-2">
+                            <li className="flex items-start gap-2 text-[11px] md:text-xs text-white/90">
+                              <div className="w-1.5 h-1.5 rounded-full bg-trust-gold mt-1.5 shrink-0" />
+                              <span>{t('premanand_satsang_req_1')}</span>
+                            </li>
+                            <li className="flex items-start gap-2 text-[11px] md:text-xs text-white/90">
+                              <div className="w-1.5 h-1.5 rounded-full bg-trust-gold mt-1.5 shrink-0" />
+                              <span>{t('premanand_satsang_req_2')}</span>
+                            </li>
+                          </ul>
+                        </div>
+
+                        <div className="p-3 bg-trust-gold/10 rounded-xl border border-trust-gold/20">
+                          <p className="text-[10px] md:text-[11px] text-trust-gold leading-relaxed font-medium">
+                            <span className="font-black uppercase tracking-tighter mr-1">TIPS:</span>
+                            {t('premanand_satsang_tips')}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="mt-12 p-8 rounded-3xl bg-gradient-to-br from-trust-navy to-[#002a45] text-white overflow-hidden shadow-2xl shadow-trust-navy/30 relative">
-                  <div className="absolute top-0 right-0 opacity-5">
-                    <Quote className="w-32 h-32 -mr-12 -mt-12" />
-                  </div>
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <p className="text-base md:text-lg italic font-medium leading-relaxed max-w-xl">
-                      "{t('quote')}"
-                    </p>
-                    <div className="flex items-center gap-4 shrink-0">
-                      <div className="w-10 h-10 rounded-full border-2 border-trust-gold/30 flex items-center justify-center">
-                        <span className="text-trust-gold font-serif italic font-bold">V</span>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-trust-gold">Vrindavan 360 Plus</p>
-                        <p className="text-[8px] text-white/40 uppercase tracking-widest">Official Digital Companion</p>
-                      </div>
+                  {/* Fraud Warning Footer */}
+                  <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-center">
+                    <div className="flex items-center gap-3 px-6 py-3 bg-rose-500/20 rounded-full border border-rose-500/30 backdrop-blur-sm">
+                      <AlertCircle className="w-4 h-4 text-rose-400" />
+                      <p className="text-[10px] md:text-xs font-black uppercase tracking-widest text-rose-200">
+                        {t('premanand_note_fraud')}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-            </div>
-          </motion.div>
+          </div>
         </div>
       </header>
-
-      <main className="max-w-6xl mx-auto px-6 pb-32">
+      <main className="max-w-7xl mx-auto px-4 md:px-8 pb-32">
         {/* Temple List */}
-        <section id="temples" className="mb-32">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+        <section id="temples" className="mb-20">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
             <div>
-              <h3 className="section-title">{t('directory_title')}</h3>
-              <p className="text-slate-500">{t('directory_desc')}</p>
+              <h3 className="text-2xl md:text-4xl font-black text-trust-navy mb-2">{t('directory_title')}</h3>
+              <p className="text-sm md:text-base text-slate-500">{t('directory_desc')}</p>
             </div>
             <div className="relative w-full md:w-96">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
                 type="text" 
                 placeholder={t('search_placeholder')}
+                aria-label="Search temples in Vrindavan"
                 className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-trust-mint/20 focus:border-trust-mint transition-all outline-none bg-white shadow-sm"
                 value={searchQuery}
                 onChange={(e) => {
@@ -1556,7 +1532,12 @@ export default function App() {
                 <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping absolute opacity-75" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 relative shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
               </div>
-              <span className="relative z-10">अभी कहाँ दर्शन होंगे?</span>
+              <span className="relative z-10">
+                {language === 'hi' ? 'अभी कहाँ दर्शन होंगे?' : 'Where to go now?'} 
+                <span className="ml-2 px-2 py-0.5 bg-white/20 rounded-full text-[10px]">
+                  {temples.filter(t => getTempleStatus(t).isOpen).length} {language === 'hi' ? 'खुले हैं' : 'Open'}
+                </span>
+              </span>
             </button>
             
             <div className="h-6 w-px bg-slate-200 mx-2 hidden sm:block" />
@@ -1591,7 +1572,7 @@ export default function App() {
                 }
               }
             }}
-            className="grid gap-6"
+            className="grid gap-6 md:grid-cols-1 lg:grid-cols-2"
           >
             {loading ? (
               <div className="py-20 text-center">
@@ -1785,8 +1766,125 @@ export default function App() {
           </motion.div>
         </section>
 
+        {/* Founder Intro & Services */}
+        <section id="founder-intro" className="mb-20">
+          <div className="bg-white rounded-[2.5rem] p-6 md:p-16 border border-slate-100 shadow-2xl shadow-trust-navy/5 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-trust-gold/5 rounded-full -mr-48 -mt-48 blur-3xl transition-transform group-hover:scale-110" />
+            
+            <div className="relative z-10">
+              <div className="flex flex-col md:flex-row md:items-center gap-8 mb-12 border-b border-slate-100 pb-10">
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white flex items-center justify-center shadow-xl shadow-trust-navy/5 shrink-0 border-4 border-trust-gold/20 transition-all duration-500 group-hover:shadow-trust-gold/40 overflow-hidden relative p-1">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-trust-gold/10 to-transparent pointer-events-none z-10" />
+                  <img 
+                    src="/logo.png" 
+                    alt="Ras Naagri Sharan - Vrindavan 360 Plus Founder and Spiritual Guide" 
+                    className="w-full h-full object-contain opacity-100 transition-transform duration-700 group-hover:scale-110"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544061101-494203977b97?auto=format&fit=crop&q=80&w=400';
+                    }}
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-widest rounded-full border border-emerald-100 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3 h-3" /> {t('intro_verified')}
+                    </span>
+                    <span className="px-3 py-1 bg-trust-gold/10 text-trust-gold text-[9px] font-black uppercase tracking-widest rounded-full border border-emerald-100 flex items-center gap-1.5">
+                      {t('intro_dhamvaasi')}
+                    </span>
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-serif italic font-black text-trust-navy leading-tight">
+                    Shree Harivansh <span className="text-trust-gold">!!</span>
+                  </h2>
+                  <p className="text-lg text-slate-400 font-medium italic mt-1">{t('intro_radhe')}</p>
+                </div>
+              </div>
+              
+              <div className="grid md:grid-cols-5 gap-12 md:gap-20 items-start">
+                <div className="md:col-span-3 space-y-8 text-slate-600 leading-relaxed">
+                  <div className="relative">
+                    <Quote className="absolute -top-6 -left-6 w-12 h-12 text-slate-100 -z-10 rotate-180" />
+                    <p className="text-lg md:text-xl font-medium text-slate-700">
+                      {t('intro_main').split(/(\*\*.*?\*\*|\[.*?\])/).map((part, i) => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                          return <strong key={i} className="text-trust-navy font-black">{part.slice(2, -2)}</strong>;
+                        }
+                        if (part.startsWith('[') && part.endsWith(']')) {
+                          return (
+                            <span key={i} className="text-xl md:text-2xl font-black text-trust-gold italic uppercase tracking-tight mx-1">
+                              "{part.slice(1, -1)}"
+                            </span>
+                          );
+                        }
+                        return part;
+                      })}
+                    </p>
+                  </div>
+                  
+                  <p className="text-base md:text-lg leading-relaxed">
+                    {t('intro_goal')}
+                  </p>
+                  
+                  <div className="pt-4 flex items-center gap-4">
+                    <div className="w-12 h-px bg-slate-200" />
+                    <p className="text-sm font-serif italic text-trust-navy font-bold opacity-60">{t('intro_tagline')}</p>
+                  </div>
+                </div>
+
+                <div className="md:col-span-2 bg-slate-50/50 rounded-[2rem] p-6 border border-slate-100 space-y-6">
+                  <h4 className="text-[10px] font-black text-trust-navy uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-trust-gold" /> {t('services_title')}
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    {[
+                      { title: t('service_1_title'), desc: t('service_1_desc') },
+                      { title: t('service_2_title'), desc: t('service_2_desc') },
+                      { title: t('service_3_title'), desc: t('service_3_desc') },
+                      { title: t('service_4_title'), desc: t('service_4_desc') }
+                    ].map((service, idx) => (
+                      <div key={idx} className="flex gap-3 items-start group/item">
+                        <div className="mt-1 bg-white text-emerald-600 p-1 rounded-lg shadow-sm border border-slate-100 group-hover/item:border-emerald-200 transition-colors">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-trust-navy mb-0.5">{service.title}</p>
+                          <p className="text-[10px] text-slate-500 leading-snug">{service.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-12 p-8 rounded-3xl bg-gradient-to-br from-trust-navy to-[#002a45] text-white overflow-hidden shadow-2xl shadow-trust-navy/30 relative">
+                <div className="absolute top-0 right-0 opacity-5">
+                  <Quote className="w-32 h-32 -mr-12 -mt-12" />
+                </div>
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <p className="text-base md:text-lg italic font-medium leading-relaxed max-w-xl">
+                    "{t('quote')}"
+                  </p>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="w-10 h-10 rounded-full border-2 border-trust-gold/30 flex items-center justify-center">
+                      <span className="text-trust-gold font-serif italic font-bold">V</span>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-trust-gold">Vrindavan 360 Plus</p>
+                      <p className="text-[8px] text-white/40 uppercase tracking-widest">Official Digital Companion</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Social Proof - Testimonials */}
-        <section id="testimonials" className="mb-32 bg-trust-navy rounded-[3rem] p-12 md:p-20 relative overflow-hidden">
+        <section id="testimonials" className="mb-20 bg-trust-navy rounded-[2.5rem] p-10 md:p-20 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-trust-gold/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
           
           <div className="relative z-10">

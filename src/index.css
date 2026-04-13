@@ -9,6 +9,13 @@
   --color-trust-gold: #C48F00; /* Rich Gold/Ochre */
   --color-trust-mint: #10B981; /* Emerald/Mint Green */
   --color-trust-bg: #FFFFFF; /* Clean White */
+
+  --animate-marquee: marquee 30s linear infinite;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-33.33%); }
+  }
 }
 
 @layer base {

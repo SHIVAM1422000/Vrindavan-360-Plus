@@ -4,6 +4,7 @@
 @theme {
   --font-sans: "Inter", sans-serif;
   --font-serif: "Cormorant Garamond", serif;
+  --font-hindi: "Mukta", sans-serif;
   
   --color-trust-navy: #002147; /* Premium Navy Blue */
   --color-trust-gold: #C48F00; /* Rich Gold/Ochre */
@@ -21,6 +22,10 @@
 @layer base {
   body {
     @apply bg-trust-bg text-trust-navy font-sans antialiased selection:bg-trust-gold/20;
+  }
+  
+  .font-hindi {
+    line-height: 1.75;
   }
 }
 

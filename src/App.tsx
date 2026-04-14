@@ -969,6 +969,11 @@ export default function App() {
       "name": "Vrindavan Real-Time Temple Status",
       "description": "Live status and timings for major temples in Vrindavan.",
       "url": "https://vrindavan360.site/",
+      "license": "https://creativecommons.org/licenses/by/4.0/",
+      "creator": {
+        "@type": "Organization",
+        "name": "Vrindavan 360 Plus"
+      },
       "hasPart": temples.map(t => ({
         "@type": "TouristAttraction",
         "name": t.name,
@@ -979,7 +984,10 @@ export default function App() {
   }, [temples, season]);
 
   return (
-    <div className="min-h-screen bg-trust-bg selection:bg-trust-gold/20 font-sans text-trust-navy">
+    <div className={cn(
+      "min-h-screen bg-trust-bg selection:bg-trust-gold/20 text-trust-navy transition-all duration-300",
+      language === 'hi' ? "font-hindi" : "font-sans"
+    )}>
       {/* Dynamic JSON-LD */}
       <script type="application/ld+json">
         {JSON.stringify(structuredData)}
@@ -1364,7 +1372,7 @@ export default function App() {
               alt="Sacred Yamuna Ghat in Vrindavan - Spiritual Heritage" 
               className="w-full h-full object-cover opacity-10 scale-105"
               referrerPolicy="no-referrer"
-              loading="lazy"
+              loading="eager"
               decoding="async"
             />
           <div className="absolute inset-0 bg-gradient-to-b from-[#FDFCF9]/0 via-[#FDFCF9]/80 to-[#FDFCF9]" />
@@ -1372,26 +1380,8 @@ export default function App() {
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 lg:gap-12">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="w-full lg:w-[32%] text-left"
-            >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-trust-gold/10 border border-trust-gold/20 mb-3 md:mb-6">
-                <Star className="w-2.5 h-2.5 text-trust-gold fill-trust-gold" />
-                <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-trust-navy">{t('hero_badge')}</span>
-              </div>
-              <h1 className="text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-serif italic font-bold text-trust-navy mb-4 md:mb-8 leading-[1.1] tracking-tighter">
-                {t('hero_title_1')} <span className="text-trust-gold ml-2 md:ml-4">{t('hero_title_2')}</span>
-              </h1>
-              <p className="text-base md:text-lg text-slate-500 font-medium max-w-3xl leading-relaxed">
-                Real time Pujya Premanand Ji Darshan + TOKEN timing, Bankey Bihari Updates, Darshan Guidance 2026 by disciple of Premanand Ji .
-              </p>
-            </motion.div>
-
-            {/* Premanand Ji Quick Updates - Integrated into Hero for Desktop */}
-            <div className="w-full lg:w-[68%]">
+            {/* Premanand Ji Quick Updates - First on Mobile, Second on Desktop */}
+            <div className="w-full lg:w-[68%] order-1 lg:order-2">
               <div className="bg-gradient-to-br from-trust-navy to-[#002a45] rounded-[2rem] md:rounded-[2.5rem] p-5 md:p-8 text-white shadow-2xl shadow-trust-navy/20 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-trust-gold/10 rounded-full -mr-32 -mt-32 blur-3xl" />
                 <div className="relative z-10">
@@ -1485,6 +1475,24 @@ export default function App() {
                 </div>
               </div>
             </div>
+
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="w-full lg:w-[32%] text-left order-2 lg:order-1"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-trust-gold/10 border border-trust-gold/20 mb-3 md:mb-6">
+                <Star className="w-2.5 h-2.5 text-trust-gold fill-trust-gold" />
+                <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-trust-navy">{t('hero_badge')}</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-serif italic font-bold text-trust-navy mb-4 md:mb-8 leading-[1.1] tracking-tighter">
+                {t('hero_title_1')} <span className="text-trust-gold ml-2 md:ml-4">{t('hero_title_2')}</span>
+              </h1>
+              <p className="text-base md:text-lg text-slate-500 font-medium max-w-3xl leading-relaxed">
+                Real time Pujya Premanand Ji Darshan + TOKEN timing, Bankey Bihari Updates, Darshan Guidance 2026 by disciple of Premanand Ji .
+              </p>
+            </motion.div>
           </div>
         </div>
       </header>

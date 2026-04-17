@@ -381,7 +381,14 @@ export default function App() {
   const [showWhatsappBadge, setShowWhatsappBadge] = useState(false);
   const [whatsappForm, setWhatsappForm] = useState({ name: '', phone: '', enquiry: '' });
   const [hasClickedWhatsapp, setHasClickedWhatsapp] = useState(false);
-  const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  const [language, setLanguage] = useState<'en' | 'hi'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const lang = params.get('lang');
+      if (lang === 'hi' || lang === 'en') return lang as 'en' | 'hi';
+    }
+    return 'en';
+  });
   const [showFAQ, setShowFAQ] = useState(false);
   const [visitedTemples, setVisitedTemples] = useState<number[]>(() => {
     const saved = localStorage.getItem('visitedTemples');
@@ -700,6 +707,9 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.lang = language;
+    document.title = language === 'hi' 
+      ? 'वृंदावन 360 प्लस | प्रेमानंद जी दर्शन और बांके बिहारी समय 2026'
+      : 'Vrindavan 360 Plus | Real-time Premanand Ji Darshan & Banke Bihari Timings 2026';
   }, [language]);
 
   useEffect(() => {
@@ -969,11 +979,6 @@ export default function App() {
       "name": "Vrindavan Real-Time Temple Status",
       "description": "Live status and timings for major temples in Vrindavan.",
       "url": "https://vrindavan360.site/",
-      "license": "https://creativecommons.org/licenses/by/4.0/",
-      "creator": {
-        "@type": "Organization",
-        "name": "Vrindavan 360 Plus"
-      },
       "hasPart": temples.map(t => ({
         "@type": "TouristAttraction",
         "name": t.name,

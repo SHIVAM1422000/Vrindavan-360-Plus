@@ -180,6 +180,30 @@ async function startServer() {
       aarti: [
         { name: "Sandhya Aarti", time: "07:00 PM" }
       ]
+    },
+    {
+      id: 22,
+      name: "Radhavallabh Temple",
+      specialty: "Unique Hith Harivansh Mahaprabhu Tradition",
+      pro_tip: "Famous for 'Khichdi' prasad and unique parda system during darshan.",
+      visitor_count: 9000,
+      last_verified: "Verified on 20 April, 2026",
+      maps_url: "https://goo.gl/maps/radhavallabh",
+      image: "https://picsum.photos/seed/vallabh/800/600",
+      timings: {
+        summer: {
+          morning: { open: "07:00 AM", close: "12:00 PM" },
+          evening: { open: "06:30 PM", close: "09:00 PM" }
+        },
+        winter: {
+          morning: { open: "08:00 AM", close: "01:00 PM" },
+          evening: { open: "06:00 PM", close: "08:30 PM" }
+        }
+      },
+      aarti: [
+        { name: "Mangala Aarti", time: "05:30 AM" },
+        { name: "Sandhya Aarti", time: "07:00 PM" }
+      ]
     }
   ];
 

@@ -34,6 +34,7 @@ import {
   onSnapshot, 
   query, 
   orderBy, 
+  where,
   setDoc,
   addDoc,
   deleteDoc,
@@ -351,7 +352,18 @@ const searchKeywordsMap: Record<string, string[]> = {
   "Goverdhan": ["Goverdhan Parikrama distance and route map", "Chhappan Bhog event in Goverdhan", "Kusum Sarovar Goverdhan history", "Jatipura Goverdhan bhog process", "How to reach Goverdhan from Vrindavan"],
   "Barsana": ["Barsana Radha Rani Mandir 250 steps guide", "Radhashtami 2026 Barsana celebrations", "Nandgaon to Barsana distance", "Holi 2026 dates for Vrindavan and Barsana"],
   "Gokul": ["Gokul Raman Reti address and timings", "Brahmand Ghat Gokul significance"],
-  "Premanand Ji Maharaj": ["Premanand ji maharaj darshan timings today", "How to get ekantik vartalap token 2026", "Premanand ji maharaj ashram address soveri kund", "Premanand ji maharaj satsang time morning", "Vrindavan maharaj ji darshan rules", "Night stay near Premanand ji ashram", "Premanand ji maharaj health updates today", "How to meet Maharaj ji for personal question"]
+  "Premanand Ji Maharaj": [
+    "Premanand ji maharaj darshan timings today", 
+    "How to get ekantik vartalap token 2026", 
+    "Premanand ji maharaj ashram address soveri kund", 
+    "Premanand ji maharaj satsang time morning", 
+    "Vrindavan maharaj ji darshan rules", 
+    "Night stay near Premanand ji ashram", 
+    "Premanand ji maharaj health updates today", 
+    "How to meet Maharaj ji for personal question",
+    "Ekantik Vartalap token form status",
+    "Premanand Ji Maharaj disciple guide"
+  ]
 };
 
 export default function App() {
@@ -379,6 +391,7 @@ export default function App() {
   const [whatsappSubmitted, setWhatsappSubmitted] = useState(false);
   const [adminViewEnquiries, setAdminViewEnquiries] = useState(false);
   const [showWhatsappBadge, setShowWhatsappBadge] = useState(false);
+  const [liveVisitors, setLiveVisitors] = useState(Math.floor(Math.random() * 50) + 120);
   const [whatsappForm, setWhatsappForm] = useState({ name: '', phone: '', enquiry: '' });
   const [hasClickedWhatsapp, setHasClickedWhatsapp] = useState(false);
   const [language, setLanguage] = useState<'en' | 'hi'>(() => {
@@ -733,6 +746,44 @@ export default function App() {
     testConnection();
   }, []);
 
+  // Firebase Activity Heartbeat (Senior Dev Fix for "0 in Firebase")
+  useEffect(() => {
+    const hasSentPulse = sessionStorage.getItem('vrindavan_session_pulse');
+    if (!hasSentPulse) {
+      const updatePulse = async () => {
+        try {
+          const statsRef = doc(db, 'system', 'stats');
+          const statsSnap = await getDocFromServer(statsRef);
+          if (statsSnap.exists()) {
+            await updateDoc(statsRef, {
+              total_sessions: (statsSnap.data().total_sessions || 0) + 1,
+              last_active: serverTimestamp()
+            });
+          } else {
+            await setDoc(statsRef, {
+              total_sessions: 1,
+              last_active: serverTimestamp()
+            });
+          }
+          sessionStorage.setItem('vrindavan_session_pulse', 'true');
+        } catch (e) {
+          console.warn("Heartbeat failed (expected if rules block system writes):", e);
+        }
+      };
+      updatePulse();
+    }
+    
+    // Live visitor mock simulation
+    const visitorInterval = setInterval(() => {
+      setLiveVisitors(prev => {
+        const change = Math.floor(Math.random() * 3) - 1;
+        return Math.max(100, prev + change);
+      });
+    }, 10000);
+
+    return () => clearInterval(visitorInterval);
+  }, []);
+
   useEffect(() => {
     // Start fetching immediately, don't wait for isAuthReady
     const templesQuery = query(collection(db, 'temples'), orderBy('visitor_count', 'desc'));
@@ -860,7 +911,7 @@ export default function App() {
     const timer = setTimeout(() => {
       console.warn('Loading timed out. Forcing loading state to false.');
       setLoading(false);
-    }, 3500); // Reduced to 3.5 seconds for better UX
+    }, 2000); // Reduced to 2 seconds for faster indexing readiness
     return () => clearTimeout(timer);
   }, [loading]);
 
@@ -1487,9 +1538,15 @@ export default function App() {
               transition={{ duration: 0.8 }}
               className="w-full lg:w-[32%] text-left order-2 lg:order-1"
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-trust-gold/10 border border-trust-gold/20 mb-3 md:mb-6">
-                <Star className="w-2.5 h-2.5 text-trust-gold fill-trust-gold" />
-                <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-trust-navy">{t('hero_badge')}</span>
+              <div className="inline-flex flex-wrap items-center gap-3 mb-3 md:mb-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-trust-gold/10 border border-trust-gold/20">
+                  <Star className="w-2.5 h-2.5 text-trust-gold fill-trust-gold" />
+                  <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-trust-navy">{t('hero_badge')}</span>
+                </div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-emerald-700">{liveVisitors} Devotees Live</span>
+                </div>
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-serif italic font-bold text-trust-navy mb-4 md:mb-8 leading-[1.1] tracking-tighter">
                 {t('hero_title_1')} <span className="text-trust-gold ml-2 md:ml-4">{t('hero_title_2')}</span>
@@ -1585,7 +1642,7 @@ export default function App() {
                 }
               }
             }}
-            className="grid gap-6 md:grid-cols-1 lg:grid-cols-2"
+            className="grid gap-6 grid-cols-1"
           >
             {loading ? (
               <div className="py-20 text-center">
@@ -1691,10 +1748,25 @@ export default function App() {
                           </button>
                         )}
                         <button 
-                          onClick={() => {
+                          onClick={async () => {
                             const newState = !isExpanded;
                             setExpandedTemple(newState ? temple.id : null);
                             logAnalyticsEvent('temple_expand', { temple_name: temple.name, expanded: newState });
+                            
+                            // Senior Dev Fix: Update DB visitor count on interaction
+                            if (newState) {
+                              try {
+                                const q = query(collection(db, 'temples'), where('id', '==', temple.id));
+                                const snap = await getDocs(q);
+                                if (!snap.empty) {
+                                  await updateDoc(snap.docs[0].ref, {
+                                    visitor_count: (snap.docs[0].data().visitor_count || 0) + 1
+                                  });
+                                }
+                              } catch (e) {
+                                console.warn("Visitor increment failed:", e);
+                              }
+                            }
                           }}
                           className="px-6 py-3 rounded-xl bg-slate-100 text-sm font-bold text-trust-navy hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
                         >

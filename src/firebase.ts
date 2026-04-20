@@ -11,13 +11,15 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth();
 
-// Initialize Analytics only if measurementId is present and we are in a browser
-export const analytics = (typeof window !== 'undefined' && firebaseConfig.measurementId) 
+// Initialize Analytics with better safety checks
+export const analytics = typeof window !== 'undefined' && firebaseConfig.measurementId 
   ? getAnalytics(app) 
   : null;
 
-if (typeof window !== 'undefined' && !firebaseConfig.measurementId) {
-  console.warn("Firebase Analytics: measurementId is missing in firebase-applet-config.json. Events will not be tracked.");
+if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
+  console.log("Firebase Analytics initialized with ID:", firebaseConfig.measurementId);
+} else if (typeof window !== 'undefined') {
+  console.warn("Analytics missing ID. Standard gtag tracking in index.html will still work.");
 }
 
 export const logAnalyticsEvent = (name: string, params?: any) => {

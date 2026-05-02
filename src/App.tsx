@@ -21,7 +21,11 @@ import {
   Trash2,
   Quote,
   Compass,
-  Phone
+  Phone,
+  Bike,
+  ShoppingBag,
+  UserCheck,
+  Video
 } from 'lucide-react';
 import { format, isWithinInterval, parse, set, differenceInMinutes, subHours, addMinutes, subMinutes, isValid } from 'date-fns';
 import { clsx, type ClassValue } from 'clsx';
@@ -240,8 +244,8 @@ const translations = {
     premanand_title: "Pujya Premanand Ji Updates",
     premanand_subtitle: "Direct from Maharaji's Disciple • 2026 Guidance",
     premanand_darshan_q: "When is Darshan?",
-    premanand_darshan_a: "6 AM at Soveri Kund every day.",
-    premanand_darshan_tips: "Reach as early as 5 AM to get the front seat.",
+    premanand_darshan_a: "PAD YATRA everyday at 3am @SOVERI KUND",
+    premanand_darshan_tips: "Reach as early as 1 AM to get the front seat.",
     premanand_map: "Map",
     premanand_satsang_q: "How to attend Ekantik Vartalap/Satsang?",
     premanand_satsang_req_title: "Two Prior Requirements:",
@@ -249,7 +253,7 @@ const translations = {
     premanand_satsang_req_2: "If you fulfill above condition then reach the Radha Keli Kunj Ashram's 'ENQUIRY COUNTER' to fill the 'FORM' b/w 10 AM to 3:30 PM everyday.",
     premanand_satsang_tips: "The forms are made available to almost everyone so don't panic there is no 'QUOTA' for that. The selection will be done for 90 men and 90 women.",
     premanand_note_fraud: "BEWARE of FRAUDS, THE TOKEN and FORMS are completely 'FREE'.",
-    premanand_enquiry: "ASHRAM (24*7) Enquiry number : 7777048484",
+    premanand_enquiry: "Enquiry (Direct WhatsApp): 9084336228",
   },
   hi: {
     nav_temples: "मंदिर",
@@ -322,8 +326,8 @@ const translations = {
     premanand_title: "पूज्य प्रेमानंद जी अपडेट्स",
     premanand_subtitle: "महाराज जी के शिष्य द्वारा सीधे • 2026 मार्गदर्शन",
     premanand_darshan_q: "दर्शन कब होते हैं?",
-    premanand_darshan_a: "हर दिन सुबह 6 बजे सोवेरी कुंड पर।",
-    premanand_darshan_tips: "सामने की सीट पाने के लिए सुबह 5 बजे तक पहुँचें।",
+    premanand_darshan_a: "हर दिन सुबह 3 बजे 'पद यात्रा' @सोवेरी कुंड",
+    premanand_darshan_tips: "सामने की सीट पाने के लिए रात 1 बजे तक पहुँचें।",
     premanand_map: "नक्शा",
     premanand_satsang_q: "एकांतिक वार्तालाप/सत्संग में कैसे शामिल हों?",
     premanand_satsang_req_title: "दो पूर्व आवश्यकताएं:",
@@ -331,7 +335,7 @@ const translations = {
     premanand_satsang_req_2: "यदि आप उपरोक्त शर्त पूरी करते हैं तो हर दिन सुबह 10 बजे से दोपहर 3:30 बजे के बीच 'फॉर्म' भरने के लिए राधा केलि कुंज आश्रम के 'पूछताछ काउंटर' पर पहुँचें।",
     premanand_satsang_tips: "फॉर्म लगभग सभी के लिए उपलब्ध कराए जाते हैं इसलिए घबराएं नहीं, इसके लिए कोई 'कोटा' नहीं है। चयन 90 पुरुषों और 90 महिलाओं के लिए किया जाएगा।",
     premanand_note_fraud: "धोखाधड़ी से सावधान रहें, टोकन और फॉर्म पूरी तरह से 'मुफ्त' हैं।",
-    premanand_enquiry: "आश्रम (24*7) पूछताछ नंबर : 7777048484",
+    premanand_enquiry: "पूछताछ (सीधे व्हाट्सएप): 9084336228",
   }
 };
 
@@ -387,12 +391,8 @@ export default function App() {
   const [editingTemple, setEditingTemple] = useState<Temple | null>(null);
   const [editingEvent, setEditingEvent] = useState<SpecialEvent | null>(null);
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
-  const [whatsappSubmitted, setWhatsappSubmitted] = useState(false);
-  const [adminViewEnquiries, setAdminViewEnquiries] = useState(false);
   const [showWhatsappBadge, setShowWhatsappBadge] = useState(false);
   const [liveVisitors, setLiveVisitors] = useState(Math.floor(Math.random() * 50) + 120);
-  const [whatsappForm, setWhatsappForm] = useState({ name: '', phone: '', enquiry: '' });
   const [hasClickedWhatsapp, setHasClickedWhatsapp] = useState(false);
   const [language, setLanguage] = useState<'en' | 'hi'>(() => {
     if (typeof window !== 'undefined') {
@@ -612,24 +612,13 @@ export default function App() {
     }
   };
 
-  const handleWhatsappSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    logAnalyticsEvent('whatsapp_form_submit', { ...whatsappForm });
-    
-    try {
-      await addDoc(collection(db, 'enquiries'), {
-        ...whatsappForm,
-        timestamp: serverTimestamp()
-      });
-      setWhatsappSubmitted(true);
-      setTimeout(() => {
-        setShowWhatsAppModal(false);
-        setWhatsappSubmitted(false);
-        setWhatsappForm({ name: '', phone: '', enquiry: '' });
-      }, 2000);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'enquiries');
+  const handleWhatsappRedirect = () => {
+    if (!hasClickedWhatsapp) {
+      logAnalyticsEvent('whatsapp_first_click');
+      setHasClickedWhatsapp(true);
     }
+    logAnalyticsEvent('whatsapp_click');
+    window.open('https://wa.me/919084336228?text=Radhe%20Radhe!%20I%20need%20some%20help/guidance%20regarding%20Vrindavan%20Yatra.', '_blank');
   };
 
   const migrateInitialData = async () => {
@@ -1058,14 +1047,17 @@ export default function App() {
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Live from Vrindavan
               </span>
+              <span 
+                onClick={handleWhatsappRedirect}
+                className="text-[10px] font-bold text-white/90 uppercase tracking-widest cursor-pointer bg-white/10 px-3 py-1 rounded-full border border-white/5"
+              >
+                Need Help? WhatsApp Ras Naagri Sharan (Disciple) for Guide & Sewa
+              </span>
               <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
                 Premanand Ji Darshan Token: Distribution Started at 10:00 AM
               </span>
               <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
                 Banke Bihari: Crowd Level Normal
-              </span>
-              <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
-                Radha Vallabh: Aarti in 45 mins
               </span>
             </div>
           ))}
@@ -1078,7 +1070,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-trust-gold/30 shadow-lg shadow-trust-navy/10 bg-white group relative shrink-0">
               <img 
-                src="/logo.png" 
+                src="https://lh3.googleusercontent.com/d/1pZepXblx97sK1uwkga6NOaf_pPmD1zZz" 
                 alt="Vrindavan 360 Plus Logo" 
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 referrerPolicy="no-referrer"
@@ -1142,220 +1134,50 @@ export default function App() {
       </nav>
 
       {/* Floating WhatsApp Button (Right) */}
-      <motion.button
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ 
-          scale: [1, 1.05, 1], 
-          opacity: 1,
-          boxShadow: [
-            "0 0 0px rgba(212, 175, 55, 0)", 
-            "0 0 30px rgba(212, 175, 55, 0.6)", 
-            "0 0 0px rgba(212, 175, 55, 0)"
-          ]
-        }}
-        transition={{ 
-          scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-          opacity: { duration: 0.3 },
-          boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-        }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => {
-          if (!hasClickedWhatsapp) {
-            logAnalyticsEvent('whatsapp_first_click');
-            setHasClickedWhatsapp(true);
-          }
-          if (isUserAdmin(user?.email)) {
-            setAdminViewEnquiries(true);
-          } else {
-            setAdminViewEnquiries(false);
-          }
-          setShowWhatsAppModal(true);
-          setShowWhatsappBadge(false);
-          logAnalyticsEvent('whatsapp_icon_click');
-        }}
-        className="fixed bottom-8 right-4 md:bottom-6 md:right-6 z-[60] w-12 h-12 md:w-14 md:h-14 bg-[#25D366] text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-[#20ba5a] transition-colors border-4 border-white"
-      >
-        <svg viewBox="0 0 24 24" className="w-6 h-6 md:w-8 md:h-8 fill-current">
-          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-        </svg>
-        {showWhatsappBadge && (
-          <motion.div 
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white rounded-full border-2 border-white text-[10px] font-black flex items-center justify-center shadow-lg"
-          >
-            1
-          </motion.div>
-        )}
-      </motion.button>
-
-      {/* WhatsApp Form Modal */}
-      <AnimatePresence>
-        {showWhatsAppModal && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowWhatsAppModal(false)}
-            className="fixed inset-0 z-[100] bg-trust-navy/60 backdrop-blur-sm overflow-y-auto flex items-start justify-center p-4 md:p-10"
-          >
+      <div className="fixed bottom-8 right-4 md:bottom-6 md:right-6 z-[60] flex flex-col items-end gap-2">
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="bg-white px-3 py-1.5 rounded-full shadow-lg border border-slate-100 text-[10px] font-black uppercase tracking-widest text-[#25D366] flex items-center gap-2 mb-1"
+        >
+          <div className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse" />
+          {language === 'hi' ? 'व्हाट्सएप पर सहायता' : 'WhatsApp Support'}
+        </motion.div>
+        <motion.button
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ 
+            scale: [1, 1.05, 1], 
+            opacity: 1,
+            boxShadow: [
+              "0 0 0px rgba(37, 211, 102, 0)", 
+              "0 0 30px rgba(37, 211, 102, 0.4)", 
+              "0 0 0px rgba(37, 211, 102, 0)"
+            ]
+          }}
+          transition={{ 
+            scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+            opacity: { duration: 0.3 },
+            boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+          }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={handleWhatsappRedirect}
+          className="w-12 h-12 md:w-14 md:h-14 bg-[#25D366] text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-[#20ba5a] transition-colors border-4 border-white"
+        >
+          <svg viewBox="0 0 24 24" className="w-6 h-6 md:w-8 md:h-8 fill-current">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+          {showWhatsappBadge && (
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-[#E5DDD5] w-full max-w-md rounded-3xl shadow-2xl relative overflow-hidden flex flex-col my-auto"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 text-white rounded-full border-2 border-white text-[10px] font-black flex items-center justify-center shadow-lg"
             >
-              {/* WhatsApp Style Header */}
-              <div className="bg-[#075E54] p-4 flex items-center gap-3 text-white shrink-0">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold">Ras Naagri Sharan</h3>
-                  <p className="text-[10px] text-white/70">Online (Radhe Radhe!)</p>
-                </div>
-                {isUserAdmin(user?.email) && (
-                  <button 
-                    onClick={() => setAdminViewEnquiries(!adminViewEnquiries)}
-                    className="ml-auto px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-[10px] font-bold border border-white/20"
-                  >
-                    {adminViewEnquiries ? 'Show Form' : `Leads (${enquiries.length})`}
-                  </button>
-                )}
-                <button 
-                  onClick={() => setShowWhatsAppModal(false)}
-                  className={cn("p-2 hover:bg-white/10 rounded-full transition-colors", !isUserAdmin(user?.email) && "ml-auto")}
-                >
-                  <CheckCircle2 className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Chat Area / Form */}
-              <div className="p-6 space-y-4 bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat overflow-y-auto custom-scrollbar min-h-[450px]">
-                {whatsappSubmitted ? (
-                  <motion.div 
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="flex flex-col items-center justify-center h-full pt-10 space-y-4"
-                  >
-                    <motion.div 
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", damping: 12 }}
-                      className="w-20 h-20 bg-[#25D366] rounded-full flex items-center justify-center shadow-xl shadow-[#25D366]/30"
-                    >
-                      <CheckCircle2 className="w-12 h-12 text-white" />
-                    </motion.div>
-                    <div className="text-center">
-                      <h3 className="text-xl font-black text-slate-800">Radhe Radhe!</h3>
-                      <p className="text-sm text-slate-600">Aapki enquiry humein mil gayi hai.</p>
-                      <p className="text-[10px] text-slate-400 mt-4 italic">Closing in 2 seconds...</p>
-                    </div>
-                  </motion.div>
-                ) : adminViewEnquiries && isUserAdmin(user?.email) ? (
-                  <div className="space-y-3">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center bg-white/80 py-1 rounded-full shadow-sm">Recent Enquiries</p>
-                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
-                      {enquiries.length === 0 ? (
-                        <p className="text-xs text-slate-400 italic text-center py-10 bg-white/50 rounded-xl">No enquiries yet.</p>
-                      ) : (
-                        enquiries.map(enquiry => (
-                          <div key={enquiry.id} className="bg-white p-4 rounded-xl rounded-tl-none shadow-sm relative border-l-4 border-[#25D366]">
-                            <div className="flex justify-between items-start mb-1">
-                              <p className="text-[10px] font-black text-trust-navy">{enquiry.name}</p>
-                              <p className="text-[8px] text-slate-400">
-                                {enquiry.timestamp?.toDate ? format(enquiry.timestamp.toDate(), 'MMM d, h:mm a') : 'Now'}
-                              </p>
-                            </div>
-                            <p className="text-[11px] font-bold text-[#25D366] mb-1">{enquiry.phone}</p>
-                            <p className="text-[11px] text-slate-600 italic leading-tight bg-slate-50 p-2 rounded-lg">"{enquiry.enquiry}"</p>
-                            <div className="pt-2">
-                              <a 
-                                href={`https://wa.me/${enquiry.phone.replace(/\D/g, '')}`} 
-                                target="_blank" 
-                                rel="noreferrer"
-                                className="text-[9px] font-black text-[#25D366] uppercase tracking-widest hover:underline flex items-center gap-1"
-                              >
-                                Reply on WhatsApp <ArrowRight className="w-2 h-2" />
-                              </a>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Introduction Message */}
-                    <div className="bg-white p-4 rounded-xl rounded-tl-none shadow-sm relative mb-4">
-                      <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1">Shree Harivansh !!</p>
-                      <p className="text-xs text-slate-700 leading-relaxed">
-                        Main <span className="font-bold text-trust-navy">"Ras Naagri Sharan"</span> pehle Software Engineer tha, par ab sab tyag kar <span className="font-bold text-trust-navy">"Param Pujya Premanand Ji Maharaj"</span> ka sishya hoon aur pichle 2.5 saal se Shri Dham Vrindavan mein vaas kar rha hoon.
-                      </p>
-                      <p className="text-xs text-slate-700 leading-relaxed mt-2">
-                        Main apne Vrindavan-Vaas ki vyavastha aur aapki yatra ko sugam banane ke liye ye <span className="font-bold text-trust-navy">Sewa (Scooty Rental / Genuine Product Orders / Guide/ Help/ Live Darshan/ Prasad)</span> pradan karta hoon.
-                      </p>
-                      <p className="text-xs font-bold text-trust-navy italic mt-2">Seva ke liye sampark kare.</p>
-                      <span className="text-[8px] text-slate-400 absolute bottom-1 right-2">Just now</span>
-                    </div>
-
-                    <div className="bg-white p-3 rounded-xl rounded-tl-none shadow-sm max-w-[85%] relative">
-                      <p className="text-xs text-red-600 font-medium">Radhe Radhe! 🙏 Kripya apni jaankari bharein taaki main aapki behtar sewa kar sakoon.</p>
-                      <span className="text-[8px] text-slate-400 absolute bottom-1 right-2">Just now</span>
-                    </div>
-
-                    <form onSubmit={handleWhatsappSubmit} className="space-y-3">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-black uppercase tracking-widest ml-1">Name</label>
-                        <input 
-                          required
-                          type="text" 
-                          placeholder="Aapka Naam"
-                          value={whatsappForm.name}
-                          onChange={(e) => setWhatsappForm({...whatsappForm, name: e.target.value})}
-                          className="w-full p-3 rounded-xl border-none shadow-sm text-sm outline-none focus:ring-2 focus:ring-[#25D366]/50"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-black uppercase tracking-widest ml-1">Phone No</label>
-                        <input 
-                          required
-                          type="tel" 
-                          placeholder="WhatsApp Number"
-                          value={whatsappForm.phone}
-                          onChange={(e) => setWhatsappForm({...whatsappForm, phone: e.target.value})}
-                          className="w-full p-3 rounded-xl border-none shadow-sm text-sm outline-none focus:ring-2 focus:ring-[#25D366]/50"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-black uppercase tracking-widest ml-1">Enquiry for?</label>
-                        <textarea 
-                          required
-                          rows={3}
-                          placeholder="Product Order / Guide / Help..."
-                          value={whatsappForm.enquiry}
-                          onChange={(e) => setWhatsappForm({...whatsappForm, enquiry: e.target.value})}
-                          className="w-full p-3 rounded-xl border-none shadow-sm text-sm outline-none focus:ring-2 focus:ring-[#25D366]/50 resize-none"
-                        />
-                      </div>
-                      <button 
-                        type="submit"
-                        className="w-full py-3 mt-2 rounded-xl bg-[#25D366] text-white font-black text-sm uppercase tracking-widest shadow-xl shadow-[#25D366]/20 hover:bg-[#20ba5a] transition-all flex items-center justify-center gap-2"
-                      >
-                        Send Message
-                      </button>
-                    </form>
-                  </>
-                )}
-              </div>
+              1
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </motion.button>
+      </div>
 
       <AnimatePresence>
         {showAlerts && (
@@ -1420,6 +1242,85 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Brijwasi Services Bento Grid */}
+      <section className="max-w-7xl mx-auto px-6 pt-10 mb-8 mt-4">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
+          <div>
+            <h3 className="text-2xl md:text-3xl font-black text-trust-navy">{language === 'hi' ? 'हमारी विशेष सेवाएं' : 'Exclusive Brijwasi Services'}</h3>
+            <p className="text-sm text-slate-500 font-medium">{language === 'hi' ? 'आपकी वृन्दावन यात्रा को सरल और सुखद बनाने के लिए' : 'To make your Vrindavan journey smooth and sacred'}</p>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-widest">Available 24/7 on WhatsApp</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Digital Counter & Tulsi Mala - Large Box */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            onClick={handleWhatsappRedirect}
+            className="md:col-span-2 bg-gradient-to-br from-trust-gold to-[#B8860B] p-6 rounded-[2rem] text-white shadow-xl shadow-trust-gold/20 cursor-pointer group overflow-hidden relative min-h-[220px] flex flex-col justify-end"
+          >
+            <div className="absolute top-4 right-4 w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md group-hover:scale-110 transition-transform">
+              <ShoppingBag className="w-10 h-10 text-white" />
+            </div>
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-2 bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 shadow-lg border border-white/20">
+                100% Shuddh aur Siddha
+              </div>
+              <h4 className="text-2xl font-black mb-2">{language === 'hi' ? 'वृन्दावन का सौभाग्य (प्रसाद एवं पोशाक)' : 'Vrindavan Divine Products'}</h4>
+              <p className="text-sm font-medium text-white/90 mb-4">
+                Ab ghar baithe mangwayein Vrindavan ka Saubhagya! Direct Brij se asli Tulsi Mala, Kanha ke sundar Poshak, Shuddh Charnamrit aur hamara 'Special Mix Prasadi Box'. 100% Cash on Delivery uplabd hai.
+              </p>
+              <div className="inline-flex items-center gap-2 bg-white text-trust-gold px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg">
+                {language === 'hi' ? 'अभी ऑर्डर करें' : 'Order Now'} <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Personal Guide */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            onClick={handleWhatsappRedirect}
+            className="md:col-span-1 bg-trust-navy p-6 rounded-[2rem] text-white shadow-xl shadow-trust-navy/20 cursor-pointer group flex flex-col justify-between border border-white/5"
+          >
+            <div className="w-12 h-12 bg-white/10 text-trust-gold rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-12 transition-transform">
+              <UserCheck className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-lg font-black mb-1">{language === 'hi' ? 'ब्रजवासी दोस्त (गाइड)' : 'Brijwasi Guide'}</h4>
+              <p className="text-[11px] text-white/70 font-medium leading-relaxed">
+                Guide nahi, ek 'Brijwasi' dost ke saath ghoomiye Vrindavan. Purane mandir aur unki ankahi kahaniyan, bilkul local style me.
+              </p>
+            </div>
+            <div className="mt-4 flex items-center gap-2 text-trust-gold font-black text-[10px] uppercase tracking-widest">
+              {language === 'hi' ? 'संपर्क करें' : 'Contact Us'} <ArrowRight className="w-3 h-3" />
+            </div>
+          </motion.div>
+
+          {/* Live Darshan Video Call */}
+          <motion.div 
+            whileHover={{ y: -5 }}
+            onClick={handleWhatsappRedirect}
+            className="md:col-span-1 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-trust-navy/5 cursor-pointer group flex flex-col justify-between"
+          >
+            <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center mb-4 group-hover:-rotate-12 transition-transform">
+              <Video className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-lg font-black text-trust-navy mb-1">{language === 'hi' ? 'साक्षात लाइव दर्शन' : 'Live Video Darshan'}</h4>
+              <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                Ghar baithe kariye Banke Bihari, Radha Vallabh, Radha Raman aur Vrindavan ke sabhi pramukh mandiron ke Sakshat Darshan. Doori chahe kitni bhi ho, Thakur ji ka aashirwad hamesha aapke paas.
+              </p>
+            </div>
+            <div className="mt-4 flex items-center gap-2 text-trust-gold font-black text-[10px] uppercase tracking-widest">
+              {language === 'hi' ? 'दर्शन शुरू करें' : 'Start Darshan'} <ArrowRight className="w-3 h-3" />
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Hero Section */}
       <header className="relative pt-4 md:pt-16 pb-4 md:pb-12 px-6 overflow-hidden flex flex-col justify-center">
         <div className="absolute inset-0 z-0">
@@ -1448,15 +1349,6 @@ export default function App() {
                     <div>
                       <h2 className="text-lg md:text-2xl font-black tracking-tight leading-tight">{t('premanand_title')}</h2>
                       <p className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-trust-gold font-bold">{t('premanand_subtitle')}</p>
-                      <a 
-                        href="tel:+917777048484"
-                        className="inline-flex items-center gap-2 mt-2 px-4 py-2 bg-trust-gold/10 rounded-xl border border-trust-gold/30 hover:bg-trust-gold/20 transition-all group"
-                      >
-                        <Phone className="w-4 h-4 text-trust-gold group-hover:scale-110 transition-transform" />
-                        <span className="text-xs md:text-base font-black text-trust-gold tracking-tight">
-                          {t('premanand_enquiry')}
-                        </span>
-                      </a>
                     </div>
                   </div>
 
@@ -1548,9 +1440,12 @@ export default function App() {
                   <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-emerald-700">{liveVisitors} Devotees Live</span>
                 </div>
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-serif italic font-bold text-trust-navy mb-4 md:mb-8 leading-[1.1] tracking-tighter">
-                {t('hero_title_1')} <span className="text-trust-gold ml-2 md:ml-4">{t('hero_title_2')}</span>
-              </h1>
+              <div className="mb-4">
+                 <p className="text-[10px] md:text-xs font-black text-trust-gold uppercase tracking-[0.4em] mb-2">{language === 'hi' ? 'परम पूज्य प्रेमानंद जी महाराज के शिष्य द्वारा' : 'By Disciple of Pujya Premanand Ji Maharaj'}</p>
+                 <h1 className="text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-serif italic font-bold text-trust-navy leading-[1.1] tracking-tighter">
+                   {t('hero_title_1')} <span className="text-trust-gold ml-2 md:ml-4">{t('hero_title_2')}</span>
+                 </h1>
+              </div>
               <p className="text-base md:text-lg text-slate-500 font-medium max-w-3xl leading-relaxed">
                 Real time Pujya Premanand Ji Darshan + TOKEN timing, Bankey Bihari Updates, Darshan Guidance 2026 by disciple of Premanand Ji .
               </p>
@@ -1558,6 +1453,7 @@ export default function App() {
           </div>
         </div>
       </header>
+
       <main className="max-w-7xl mx-auto px-4 md:px-8 pb-32">
         {/* Temple List */}
         <section id="temples" className="mb-20">
@@ -1861,7 +1757,7 @@ export default function App() {
                 <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white flex items-center justify-center shadow-xl shadow-trust-navy/5 shrink-0 border-4 border-trust-gold/20 transition-all duration-500 group-hover:shadow-trust-gold/40 overflow-hidden relative p-1">
                   <div className="absolute inset-0 bg-gradient-to-tr from-trust-gold/10 to-transparent pointer-events-none z-10" />
                   <img 
-                    src="/logo.png" 
+                    src="https://lh3.googleusercontent.com/d/1pZepXblx97sK1uwkga6NOaf_pPmD1zZz" 
                     alt="Ras Naagri Sharan - Vrindavan 360 Plus Founder and Spiritual Guide" 
                     className="w-full h-full object-contain opacity-100 transition-transform duration-700 group-hover:scale-110"
                     referrerPolicy="no-referrer"
@@ -2912,7 +2808,7 @@ export default function App() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 ${
+            className={`fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 ${
               notification.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
             }`}
           >
@@ -2921,6 +2817,27 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Mobile Sticky CTA Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-100 p-3 z-50 flex items-center justify-between gap-3 shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
+        <a href="#temples" className="flex flex-col items-center gap-1 px-4 active:scale-95 transition-transform">
+          <Clock className="w-5 h-5 text-trust-navy" />
+          <span className="text-[8px] font-black uppercase tracking-widest text-trust-navy">Timings</span>
+        </a>
+        <button 
+          onClick={handleWhatsappRedirect}
+          className="flex-1 bg-[#25D366] text-white py-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-[#25D366]/20 active:scale-[0.98] transition-transform"
+        >
+          <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+          Direct Help
+        </button>
+        <a href="#founder-intro" className="flex flex-col items-center gap-1 px-4 active:scale-95 transition-transform">
+          <Star className="w-5 h-5 text-trust-gold" />
+          <span className="text-[8px] font-black uppercase tracking-widest text-trust-gold">About</span>
+        </a>
+      </div>
     </div>
   );
 }
